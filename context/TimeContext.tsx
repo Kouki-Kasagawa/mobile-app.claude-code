@@ -5,69 +5,75 @@ const STORAGE_KEY = 'timeLogData';
 
 type SavedData = {
   totalMinutes: number;
-  todayMinutes: number;
-  savedDate: string;
+  history: Record<string, number>;
 };
 
 type TimeContextType = {
   totalMinutes: number;
   todayMinutes: number;
+  history: Record<string, number>;
   addMinutes: (minutes: number) => void;
 };
 
 const TimeContext = createContext<TimeContextType>({
   totalMinutes: 0,
   todayMinutes: 0,
+  history: {},
   addMinutes: () => {},
 });
 
 function todayString(): string {
-  return new Date().toISOString().slice(0, 10); // "2026-06-28"
+  return new Date().toISOString().slice(0, 10);
 }
 
 export function TimeProvider({ children }: { children: ReactNode }) {
   const [totalMinutes, setTotalMinutes] = useState(0);
-  const [todayMinutes, setTodayMinutes] = useState(0);
+  const [history, setHistory] = useState<Record<string, number>>({});
   const [loaded, setLoaded] = useState(false);
 
-  // 起動時に1回だけデータを読み込む
+  const todayMinutes = history[todayString()] ?? 0;
+
   useEffect(() => {
     (async () => {
       try {
         const raw = await AsyncStorage.getItem(STORAGE_KEY);
         if (raw) {
-          const data: SavedData = JSON.parse(raw);
-          setTotalMinutes(data.totalMinutes);
-          // 日付が変わっていたら今日の分はリセット
-          setTodayMinutes(data.savedDate === todayString() ? data.todayMinutes : 0);
+          const data = JSON.parse(raw);
+          setTotalMinutes(data.totalMinutes ?? 0);
+
+          if (data.history) {
+            setHistory(data.history);
+          } else if (data.savedDate && (data.todayMinutes ?? 0) > 0) {
+            // 旧フォーマットからの移行
+            setHistory({ [data.savedDate]: data.todayMinutes });
+          }
         }
       } catch {
-        // 読み込み失敗時はデフォルト値（0）のまま
+        // 読み込み失敗時はデフォルト値のまま
       } finally {
         setLoaded(true);
       }
     })();
   }, []);
 
-  // totalMinutes か todayMinutes が変わるたびに保存
   useEffect(() => {
-    if (!loaded) return; // 読み込み完了前は保存しない
-    const data: SavedData = {
-      totalMinutes,
-      todayMinutes,
-      savedDate: todayString(),
-    };
+    if (!loaded) return;
+    const data: SavedData = { totalMinutes, history };
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data)).catch(() => {});
-  }, [totalMinutes, todayMinutes, loaded]);
+  }, [totalMinutes, history, loaded]);
 
   const addMinutes = (minutes: number) => {
     if (minutes <= 0) return;
+    const today = todayString();
     setTotalMinutes(prev => prev + minutes);
-    setTodayMinutes(prev => prev + minutes);
+    setHistory(prev => ({
+      ...prev,
+      [today]: (prev[today] ?? 0) + minutes,
+    }));
   };
 
   return (
-    <TimeContext.Provider value={{ totalMinutes, todayMinutes, addMinutes }}>
+    <TimeContext.Provider value={{ totalMinutes, todayMinutes, history, addMinutes }}>
       {children}
     </TimeContext.Provider>
   );

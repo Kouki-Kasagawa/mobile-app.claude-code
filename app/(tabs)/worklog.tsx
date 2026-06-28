@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -14,7 +15,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { AppColors } from '@/constants/theme';
-import { useTime } from '@/context/TimeContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 // 7時間の勤務・授業 → 1時間の学習として換算
@@ -24,23 +24,26 @@ export default function WorklogScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 
-  const { addMinutes } = useTime();
   const [inputHours, setInputHours] = useState('');
   const [inputMinutes, setInputMinutes] = useState('');
+  const minutesRef = useRef<TextInput>(null);
 
   const totalInputMinutes =
     (parseInt(inputHours || '0') * 60) + parseInt(inputMinutes || '0');
   const convertedMinutes = Math.round(totalInputMinutes * CONVERSION_RATIO);
-  const convertedHours = Math.floor(convertedMinutes / 60);
-  const convertedMins = convertedMinutes % 60;
+  const convertedH = Math.floor(convertedMinutes / 60);
+  const convertedM = convertedMinutes % 60;
   const hasInput = totalInputMinutes > 0;
 
-  const handleAdd = () => {
-    addMinutes(convertedMinutes);
+  const handleConvert = () => {
+    Keyboard.dismiss();
+    const result = convertedH > 0
+      ? `${convertedH}時間${convertedM}分`
+      : `${convertedM}分`;
     Alert.alert(
-      '記録しました',
-      `${convertedMinutes}分を学習時間に追加しました`,
-      [{ text: 'OK', onPress: () => { setInputHours(''); setInputMinutes(''); } }]
+      '換算結果',
+      `学習換算：${result}\n（7時間勤務 → 1時間換算）`,
+      [{ text: '閉じる', onPress: () => { setInputHours(''); setInputMinutes(''); } }]
     );
   };
 
@@ -61,7 +64,7 @@ export default function WorklogScreen() {
         >
           <ThemedText type="title" style={styles.screenTitle}>勤務・授業の換算</ThemedText>
           <ThemedText style={styles.description}>
-            今日の勤務・授業時間を入力すると{'\n'}学習時間として換算して追加します
+            勤務・授業時間を入力すると{'\n'}学習換算時間の目安を確認できます
           </ThemedText>
 
           <ThemedView lightColor="#FFFFFF" darkColor="#1A251C" style={styles.inputCard}>
@@ -75,9 +78,13 @@ export default function WorklogScreen() {
                 maxLength={2}
                 placeholder="0"
                 placeholderTextColor="#9E9E9E"
+                returnKeyType="next"
+                onSubmitEditing={() => minutesRef.current?.focus()}
+                blurOnSubmit={false}
               />
               <ThemedText style={styles.inputUnit}>時間</ThemedText>
               <TextInput
+                ref={minutesRef}
                 style={inputStyle}
                 value={inputMinutes}
                 onChangeText={setInputMinutes}
@@ -85,48 +92,20 @@ export default function WorklogScreen() {
                 maxLength={2}
                 placeholder="0"
                 placeholderTextColor="#9E9E9E"
+                returnKeyType="done"
+                onSubmitEditing={Keyboard.dismiss}
               />
               <ThemedText style={styles.inputUnit}>分</ThemedText>
             </View>
           </ThemedView>
 
-          <View style={[
-            styles.resultCard,
-            { backgroundColor: hasInput
-                ? (isDark ? AppColors.accentDeep : AppColors.accentLight)
-                : (isDark ? '#1A251C' : '#F7F7F7') },
-          ]}>
-            <Text style={[styles.resultLabel, { color: hasInput ? AppColors.accentDark : '#9E9E9E' }]}>
-              換算後の学習時間
-            </Text>
-            <View style={styles.resultValueRow}>
-              {convertedHours > 0 && (
-                <>
-                  <Text style={[styles.resultValueBig, { color: hasInput ? AppColors.accentDark : '#BBBBBB' }]}>
-                    {convertedHours}
-                  </Text>
-                  <Text style={[styles.resultUnit, { color: hasInput ? AppColors.accentDark : '#9E9E9E' }]}>
-                    時間
-                  </Text>
-                </>
-              )}
-              <Text style={[styles.resultValueBig, { color: hasInput ? AppColors.accentDark : '#BBBBBB' }]}>
-                {convertedMins}
-              </Text>
-              <Text style={[styles.resultUnit, { color: hasInput ? AppColors.accentDark : '#9E9E9E' }]}>
-                分
-              </Text>
-            </View>
-            <Text style={styles.resultNote}>7時間 → 1時間換算</Text>
-          </View>
-
           <TouchableOpacity
             style={[styles.addBtn, !hasInput && styles.addBtnDisabled]}
-            onPress={handleAdd}
+            onPress={handleConvert}
             disabled={!hasInput}
             activeOpacity={0.8}
           >
-            <Text style={styles.addBtnText}>記録に追加</Text>
+            <Text style={styles.addBtnText}>換算する</Text>
           </TouchableOpacity>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -188,35 +167,6 @@ const styles = StyleSheet.create({
   inputUnit: {
     fontSize: 16,
     marginRight: 8,
-  },
-  resultCard: {
-    width: '100%',
-    borderRadius: 20,
-    padding: 24,
-    gap: 4,
-    alignItems: 'flex-start',
-  },
-  resultLabel: {
-    fontSize: 13,
-  },
-  resultValueRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 4,
-  },
-  resultValueBig: {
-    fontSize: 40,
-    fontWeight: '700',
-    lineHeight: 48,
-  },
-  resultUnit: {
-    fontSize: 16,
-    marginRight: 4,
-  },
-  resultNote: {
-    fontSize: 12,
-    color: '#9E9E9E',
-    marginTop: 4,
   },
   addBtn: {
     width: '100%',

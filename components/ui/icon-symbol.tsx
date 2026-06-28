@@ -20,6 +20,7 @@ const MAPPING = {
   'chevron.right': 'chevron-right',
   'timer': 'timer',
   'briefcase.fill': 'work',
+  'calendar': 'calendar-today',
 } as IconMapping;
 
 /**
