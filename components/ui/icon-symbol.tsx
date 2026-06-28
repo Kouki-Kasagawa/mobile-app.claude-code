@@ -21,6 +21,7 @@ const MAPPING = {
   'timer': 'timer',
   'briefcase.fill': 'work',
   'calendar': 'calendar-today',
+  'gearshape.fill': 'settings',
 } as IconMapping;
 
 /**

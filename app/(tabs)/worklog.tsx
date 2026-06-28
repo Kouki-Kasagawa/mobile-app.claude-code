@@ -15,14 +15,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { AppColors } from '@/constants/theme';
+import { useSettings } from '@/context/SettingsContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-
-// 7時間の勤務・授業 → 1時間の学習として換算
-const CONVERSION_RATIO = 1 / 7;
 
 export default function WorklogScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const { conversionRatio, workHoursPerStudy } = useSettings();
 
   const [inputHours, setInputHours] = useState('');
   const [inputMinutes, setInputMinutes] = useState('');
@@ -30,7 +29,7 @@ export default function WorklogScreen() {
 
   const totalInputMinutes =
     (parseInt(inputHours || '0') * 60) + parseInt(inputMinutes || '0');
-  const convertedMinutes = Math.round(totalInputMinutes * CONVERSION_RATIO);
+  const convertedMinutes = Math.round(totalInputMinutes * conversionRatio);
   const convertedH = Math.floor(convertedMinutes / 60);
   const convertedM = convertedMinutes % 60;
   const hasInput = totalInputMinutes > 0;
@@ -42,7 +41,7 @@ export default function WorklogScreen() {
       : `${convertedM}分`;
     Alert.alert(
       '換算結果',
-      `学習換算：${result}\n（7時間勤務 → 1時間換算）`,
+      `学習換算：${result}\n（${workHoursPerStudy}時間勤務 → 1時間換算）`,
       [{ text: '閉じる', onPress: () => { setInputHours(''); setInputMinutes(''); } }]
     );
   };

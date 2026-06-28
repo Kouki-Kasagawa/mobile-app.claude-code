@@ -13,6 +13,7 @@ type TimeContextType = {
   todayMinutes: number;
   history: Record<string, number>;
   addMinutes: (minutes: number) => void;
+  resetAll: () => void;
 };
 
 const TimeContext = createContext<TimeContextType>({
@@ -20,6 +21,7 @@ const TimeContext = createContext<TimeContextType>({
   todayMinutes: 0,
   history: {},
   addMinutes: () => {},
+  resetAll: () => {},
 });
 
 function todayString(): string {
@@ -72,8 +74,14 @@ export function TimeProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const resetAll = () => {
+    AsyncStorage.removeItem(STORAGE_KEY).catch(() => {});
+    setTotalMinutes(0);
+    setHistory({});
+  };
+
   return (
-    <TimeContext.Provider value={{ totalMinutes, todayMinutes, history, addMinutes }}>
+    <TimeContext.Provider value={{ totalMinutes, todayMinutes, history, addMinutes, resetAll }}>
       {children}
     </TimeContext.Provider>
   );
