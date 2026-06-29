@@ -10,10 +10,12 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { FatigueBattery } from '@/components/FatigueBattery';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { AppColors } from '@/constants/theme';
 import { useTime } from '@/context/TimeContext';
+import { useFatigue } from '@/hooks/use-fatigue';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 type CharacterStage = {
@@ -60,6 +62,7 @@ export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { totalMinutes, todayMinutes } = useTime();
+  const { fatigueState } = useFatigue();
 
   const totalHours = Math.floor(totalMinutes / 60);
   const totalMins = totalMinutes % 60;
@@ -104,7 +107,14 @@ export default function HomeScreen() {
   return (
     <ThemedView style={styles.root}>
       <SafeAreaView style={styles.container}>
-        <ThemedText type="title" style={styles.appTitle}>学習記録</ThemedText>
+        <View style={styles.titleRow}>
+          <ThemedText type="title">学習記録</ThemedText>
+          <FatigueBattery
+            level={fatigueState.level}
+            score={fatigueState.scores.total}
+            size="small"
+          />
+        </View>
 
         {/* キャラクターカード */}
         <View style={[
@@ -181,8 +191,11 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     gap: 16,
   },
-  appTitle: {
-    marginBottom: 0,
+  titleRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   characterCard: {
     width: 180,
