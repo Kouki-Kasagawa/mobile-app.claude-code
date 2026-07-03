@@ -12,4 +12,6 @@ export const DEFAULT_TAGS: ScheduleTag[] = [
   { id: 'cert_study', name: '資格勉強',    axis: 'cognitive', weight: 2, emoji: '📚' },
   { id: 'task_heavy', name: 'タスク過多',   axis: 'cognitive', weight: 2, emoji: '🧠' },
   { id: 'desk_job',   name: '座り仕事',    axis: 'cognitive', weight: 1, emoji: '💼' },
+  { id: 'social',     name: '対人対応',    axis: 'cognitive', weight: 2, emoji: '🗣️' },
+  { id: 'other_study', name: '他の勉強',   axis: 'cognitive', weight: 1, emoji: '📖' },
 ];

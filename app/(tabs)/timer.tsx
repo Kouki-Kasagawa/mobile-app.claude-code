@@ -1,10 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
+import { ComponentProps, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { PostSessionModal } from '@/components/PostSessionModal';
+import { PreSessionModal } from '@/components/PreSessionModal';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { AppColors } from '@/constants/theme';
+import { useStudyLogContext } from '@/context/StudyLogContext';
 import { useTime } from '@/context/TimeContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
@@ -22,9 +25,13 @@ export default function TimerScreen() {
   const isDark = colorScheme === 'dark';
 
   const { addMinutes } = useTime();
+  const { startSession, finishSession, addSubjectiveEntry, addReactionResult } = useStudyLogContext();
   const [status, setStatus] = useState<TimerStatus>('idle');
   const [seconds, setSeconds] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [preModalVisible, setPreModalVisible] = useState(false);
+  const [postModalVisible, setPostModalVisible] = useState(false);
+  const currentSessionIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (status === 'running') {
@@ -47,9 +54,61 @@ export default function TimerScreen() {
   }, [status]);
 
   const handleStop = () => {
+    setStatus('idle');
+    setPostModalVisible(true);
+  };
+
+  const handlePreSessionDone: ComponentProps<typeof PreSessionModal>['onDone'] = input => {
+    const sessionId = startSession({ subject: input.subject, reward: input.reward });
+    if (input.subjectiveScore != null) {
+      addSubjectiveEntry({
+        sessionId,
+        timing: 'pre',
+        score: input.subjectiveScore,
+        note: input.subjectiveNote,
+      });
+    }
+    if (input.reaction) {
+      addReactionResult({
+        sessionId,
+        timing: 'pre',
+        trials: input.reaction.trials,
+        avgReactionMs: input.reaction.avgReactionMs,
+        accuracy: input.reaction.accuracy,
+      });
+    }
+    currentSessionIdRef.current = sessionId;
+    setPreModalVisible(false);
+    setStatus('running');
+  };
+
+  const handlePostSessionDone: ComponentProps<typeof PostSessionModal>['onDone'] = input => {
     const elapsedMinutes = Math.round(seconds / 60);
     addMinutes(elapsedMinutes);
-    setStatus('idle');
+
+    const sessionId = currentSessionIdRef.current;
+    if (sessionId) {
+      finishSession(sessionId, elapsedMinutes);
+      if (input.subjectiveScore != null) {
+        addSubjectiveEntry({
+          sessionId,
+          timing: 'post',
+          score: input.subjectiveScore,
+          note: input.subjectiveNote,
+        });
+      }
+      if (input.reaction) {
+        addReactionResult({
+          sessionId,
+          timing: 'post',
+          trials: input.reaction.trials,
+          avgReactionMs: input.reaction.avgReactionMs,
+          accuracy: input.reaction.accuracy,
+        });
+      }
+    }
+    currentSessionIdRef.current = null;
+    setPostModalVisible(false);
     setSeconds(0);
   };
 
@@ -74,7 +133,7 @@ export default function TimerScreen() {
           {status === 'idle' && (
             <TouchableOpacity
               style={[styles.btn, styles.btnPrimary]}
-              onPress={() => setStatus('running')}
+              onPress={() => setPreModalVisible(true)}
               activeOpacity={0.8}
             >
               <Text style={styles.btnTextLight}>開始</Text>
@@ -120,6 +179,9 @@ export default function TimerScreen() {
           )}
         </View>
       </SafeAreaView>
+
+      <PreSessionModal visible={preModalVisible} onDone={handlePreSessionDone} />
+      <PostSessionModal visible={postModalVisible} onDone={handlePostSessionDone} />
     </ThemedView>
   );
 }

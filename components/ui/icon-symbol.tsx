@@ -23,6 +23,7 @@ const MAPPING = {
   'calendar': 'calendar-today',
   'gearshape.fill': 'settings',
   'bolt.heart.fill': 'favorite',
+  'chart.bar.fill': 'bar-chart',
 } as IconMapping;
 
 /**
