@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { AppColors } from '@/constants/theme';
+import { useAuth } from '@/context/AuthContext';
 import { ThemeMode, useSettings } from '@/context/SettingsContext';
 import { useTime } from '@/context/TimeContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -22,6 +23,14 @@ export default function SettingsScreen() {
   const isDark = colorScheme === 'dark';
   const { themeMode, setThemeMode, workHoursPerStudy, setWorkHoursPerStudy } = useSettings();
   const { resetAll } = useTime();
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = () => {
+    Alert.alert('ログアウトしますか？', undefined, [
+      { text: 'キャンセル', style: 'cancel' },
+      { text: 'ログアウト', style: 'destructive', onPress: signOut },
+    ]);
+  };
 
   const handleDeleteData = () => {
     Alert.alert(
@@ -43,6 +52,19 @@ export default function SettingsScreen() {
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
           <ThemedText type="title" style={styles.screenTitle}>設定</ThemedText>
+
+          {/* ── アカウント ── */}
+          <SectionHeader title="アカウント" color={mutedColor} />
+          <View style={cardStyle}>
+            <View style={styles.listRow}>
+              <ThemedText style={styles.listLabel}>メールアドレス</ThemedText>
+              <Text style={[styles.listValue, { color: mutedColor }]}>{user?.email ?? '-'}</Text>
+            </View>
+            <View style={[styles.divider, { backgroundColor: dividerColor }]} />
+            <TouchableOpacity style={styles.listRow} onPress={handleSignOut} activeOpacity={0.7}>
+              <Text style={styles.destructiveText}>ログアウト</Text>
+            </TouchableOpacity>
+          </View>
 
           {/* ── 外観 ── */}
           <SectionHeader title="外観" color={mutedColor} />
