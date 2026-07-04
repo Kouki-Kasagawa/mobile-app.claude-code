@@ -59,10 +59,13 @@ export function useFatigue(): FatigueHookResult {
     [scores, threshold, yesterdayScore]
   );
 
-  // 今日のスコアを履歴に記録（前日比較用）
+  // 今日のスコアを履歴に記録（前日比較用）。
+  // recordTodayScore は呼ぶたびに scoreHistory の参照が変わり、それに連鎖して
+  // 自身の参照も毎回変わるため、依存に含めると無限ループになる。
   useEffect(() => {
     recordTodayScore(scores.total, today);
-  }, [scores.total, today, recordTodayScore]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scores.total, today]);
 
   const todayEntries = useMemo(
     () => entries.filter(e => e.date === today),

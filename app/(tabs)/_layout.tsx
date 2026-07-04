@@ -38,13 +38,6 @@ export default function TabLayout() {
               }}
             />
             <Tabs.Screen
-              name="worklog"
-              options={{
-                title: '換算',
-                tabBarIcon: ({ color }) => <IconSymbol size={28} name="briefcase.fill" color={color} />,
-              }}
-            />
-            <Tabs.Screen
               name="history"
               options={{
                 title: 'カレンダー',
@@ -56,13 +49,6 @@ export default function TabLayout() {
               options={{
                 title: '疲労',
                 tabBarIcon: ({ color }) => <IconSymbol size={28} name="bolt.heart.fill" color={color} />,
-              }}
-            />
-            <Tabs.Screen
-              name="analysis"
-              options={{
-                title: '分析',
-                tabBarIcon: ({ color }) => <IconSymbol size={28} name="chart.bar.fill" color={color} />,
               }}
             />
             <Tabs.Screen

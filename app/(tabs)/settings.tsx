@@ -1,14 +1,32 @@
 import Constants from 'expo-constants';
-import { Alert, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useMemo, useRef, useState } from 'react';
+import {
+  Alert,
+  Keyboard,
+  Linking,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { QuadrantChart } from '@/components/QuadrantChart';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { TimeSeriesChart } from '@/components/TimeSeriesChart';
 import { AppColors } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
+import { useFatigueContext } from '@/context/FatigueContext';
 import { ThemeMode, useSettings } from '@/context/SettingsContext';
+import { useStudyLogContext } from '@/context/StudyLogContext';
 import { useTime } from '@/context/TimeContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { buildActivityCsv, buildExportJson, buildSessionsCsv, ExportBundle } from '@/utils/exportLog';
+import { saveAndShare } from '@/utils/fileExport';
+import { buildQuadrantPoints } from '@/utils/quadrant';
 
 const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
 
@@ -18,12 +36,79 @@ const THEME_OPTIONS: { mode: ThemeMode; label: string }[] = [
   { mode: 'dark', label: 'ダーク' },
 ];
 
+function todayStr(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export default function SettingsScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const { themeMode, setThemeMode, workHoursPerStudy, setWorkHoursPerStudy } = useSettings();
+  const { themeMode, setThemeMode, workHoursPerStudy, setWorkHoursPerStudy, conversionRatio } = useSettings();
   const { resetAll } = useTime();
   const { user, signOut } = useAuth();
+  const { sessions, subjectiveEntries, reactionResults } = useStudyLogContext();
+  const { entries: activityEntries, tags: activityTags } = useFatigueContext();
+
+  // ── 換算ツール ──
+  const [inputHours, setInputHours] = useState('');
+  const [inputMinutes, setInputMinutes] = useState('');
+  const minutesRef = useRef<TextInput>(null);
+  const totalInputMinutes = (parseInt(inputHours || '0') * 60) + parseInt(inputMinutes || '0');
+  const convertedMinutes = Math.round(totalInputMinutes * conversionRatio);
+  const convertedH = Math.floor(convertedMinutes / 60);
+  const convertedM = convertedMinutes % 60;
+  const hasInput = totalInputMinutes > 0;
+  const convertedResult = convertedH > 0 ? `${convertedH}時間${convertedM}分` : `${convertedM}分`;
+
+  const handleClearConversion = () => {
+    Keyboard.dismiss();
+    setInputHours('');
+    setInputMinutes('');
+  };
+
+  // ── 分析 ──
+  const [exporting, setExporting] = useState(false);
+  const points = useMemo(
+    () => buildQuadrantPoints(sessions, subjectiveEntries, reactionResults),
+    [sessions, subjectiveEntries, reactionResults]
+  );
+  const hasExportData = sessions.length > 0 || activityEntries.length > 0;
+
+  const buildBundle = (): ExportBundle => ({
+    sessions,
+    subjectiveEntries,
+    reactionResults,
+    activityEntries,
+    activityTags,
+  });
+
+  const handleExportCsv = async () => {
+    setExporting(true);
+    try {
+      const bundle = buildBundle();
+      const sessionsCsv = buildSessionsCsv(bundle);
+      const activityCsv = buildActivityCsv(bundle);
+      const combined = `# sessions\n${sessionsCsv}\n\n# activities\n${activityCsv}\n`;
+      await saveAndShare(`study_log_${todayStr()}.csv`, combined, 'text/csv');
+    } catch {
+      Alert.alert('エクスポートに失敗しました');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportJson = async () => {
+    setExporting(true);
+    try {
+      const bundle = buildBundle();
+      const json = buildExportJson(bundle);
+      await saveAndShare(`study_log_${todayStr()}.json`, json, 'application/json');
+    } catch {
+      Alert.alert('エクスポートに失敗しました');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const handleSignOut = () => {
     Alert.alert('ログアウトしますか？', undefined, [
@@ -46,6 +131,14 @@ export default function SettingsScreen() {
   const cardStyle = [styles.card, { backgroundColor: isDark ? '#1A251C' : '#FFFFFF' }];
   const dividerColor = isDark ? '#2A3B2D' : '#F0F0F0';
   const mutedColor = isDark ? '#9E9E9E' : '#AAAAAA';
+
+  const inputStyle = [
+    styles.numberInput,
+    {
+      color: isDark ? '#ECEDEE' : '#2D2D2D',
+      backgroundColor: isDark ? '#243028' : '#F4F6F4',
+    },
+  ];
 
   return (
     <ThemedView style={styles.root}>
@@ -122,6 +215,105 @@ export default function SettingsScreen() {
             <ThemedText style={styles.ratioDesc}>
               {workHoursPerStudy}時間の勤務・授業 → 1時間の学習として換算
             </ThemedText>
+          </View>
+
+          {/* ── 換算ツール ── */}
+          <SectionHeader title="換算ツール" color={mutedColor} />
+          <View style={cardStyle}>
+            <ThemedText style={[styles.rowLabel, { marginBottom: 8 }]}>
+              勤務・授業時間を入力すると学習換算時間の目安を確認できます
+            </ThemedText>
+            <View style={styles.inputRow}>
+              <TextInput
+                style={inputStyle}
+                value={inputHours}
+                onChangeText={setInputHours}
+                keyboardType="number-pad"
+                maxLength={2}
+                placeholder="0"
+                placeholderTextColor="#9E9E9E"
+                returnKeyType="next"
+                onSubmitEditing={() => minutesRef.current?.focus()}
+                blurOnSubmit={false}
+              />
+              <ThemedText style={styles.inputUnit}>時間</ThemedText>
+              <TextInput
+                ref={minutesRef}
+                style={inputStyle}
+                value={inputMinutes}
+                onChangeText={setInputMinutes}
+                keyboardType="number-pad"
+                maxLength={2}
+                placeholder="0"
+                placeholderTextColor="#9E9E9E"
+                returnKeyType="done"
+                onSubmitEditing={Keyboard.dismiss}
+              />
+              <ThemedText style={styles.inputUnit}>分</ThemedText>
+            </View>
+
+            {hasInput && (
+              <View style={[styles.resultBox, { backgroundColor: isDark ? '#243028' : '#F4F6F4' }]}>
+                <ThemedText style={styles.resultLabel}>学習換算</ThemedText>
+                <ThemedText style={[styles.resultValue, { color: AppColors.accent }]}>{convertedResult}</ThemedText>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={[styles.clearBtn, !hasInput && styles.clearBtnDisabled]}
+              onPress={handleClearConversion}
+              disabled={!hasInput}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.clearBtnText, { color: !hasInput ? '#D0D0D0' : AppColors.accent }]}>クリア</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* ── 分析 ── */}
+          <SectionHeader title="分析" color={mutedColor} />
+          {points.length === 0 ? (
+            <View style={cardStyle}>
+              <ThemedText style={[styles.emptyText, { color: mutedColor }]}>
+                学習前後に主観スコアと反応速度テストの両方を記録すると、ここに分析結果が表示されます。
+              </ThemedText>
+            </View>
+          ) : (
+            <>
+              <View style={[cardStyle, styles.analysisCard]}>
+                <ThemedText style={styles.cardTitle}>4象限マトリクス</ThemedText>
+                <QuadrantChart points={points} />
+              </View>
+
+              <View style={[cardStyle, styles.analysisCard]}>
+                <ThemedText style={styles.cardTitle}>時系列推移</ThemedText>
+                <TimeSeriesChart points={points} />
+              </View>
+            </>
+          )}
+
+          <View style={[cardStyle, styles.analysisCard]}>
+            <ThemedText style={styles.cardTitle}>データエクスポート</ThemedText>
+            <ThemedText style={[styles.emptyText, { color: mutedColor }]}>
+              学習ログ・活動ログ・主観スコア・反応時間の記録をまとめて書き出します。
+            </ThemedText>
+            <View style={styles.exportRow}>
+              <TouchableOpacity
+                style={[styles.exportBtn, { borderColor: AppColors.accent }, (!hasExportData || exporting) && styles.exportBtnDisabled]}
+                onPress={handleExportCsv}
+                disabled={!hasExportData || exporting}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.exportBtnText, { color: AppColors.accent }]}>CSVエクスポート</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.exportBtn, { borderColor: AppColors.accent }, (!hasExportData || exporting) && styles.exportBtnDisabled]}
+                onPress={handleExportJson}
+                disabled={!hasExportData || exporting}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.exportBtnText, { color: AppColors.accent }]}>JSONエクスポート</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* ── データ管理 ── */}
@@ -232,6 +424,66 @@ const styles = StyleSheet.create({
   ratioValue: { fontSize: 40, fontWeight: '700', lineHeight: 48 },
   ratioUnit: { fontSize: 13, color: '#9E9E9E' },
   ratioDesc: { textAlign: 'center', fontSize: 13, color: '#9E9E9E', marginTop: 8, paddingBottom: 4 },
+  // 換算ツール
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  numberInput: {
+    width: 64,
+    height: 48,
+    borderRadius: 12,
+    textAlign: 'center',
+    fontSize: 22,
+    fontWeight: '600',
+  },
+  inputUnit: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+  resultBox: {
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 12,
+    alignItems: 'center',
+    gap: 2,
+  },
+  resultLabel: { fontSize: 12, color: '#9E9E9E' },
+  resultValue: { fontSize: 22, fontWeight: '700' },
+  clearBtn: {
+    alignSelf: 'center',
+    marginTop: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  clearBtnDisabled: { opacity: 0.5 },
+  clearBtnText: { fontSize: 13, fontWeight: '600' },
+  // 分析
+  analysisCard: { gap: 10, alignItems: 'center' },
+  cardTitle: { fontSize: 15, fontWeight: '600', alignSelf: 'flex-start' },
+  emptyText: { fontSize: 13, textAlign: 'center', lineHeight: 20 },
+  exportRow: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+    marginTop: 4,
+  },
+  exportBtn: {
+    flex: 1,
+    borderWidth: 1.5,
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  exportBtnDisabled: {
+    opacity: 0.4,
+  },
+  exportBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
   // リスト行
   listRow: {
     flexDirection: 'row',
