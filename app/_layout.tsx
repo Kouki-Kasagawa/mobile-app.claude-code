@@ -24,26 +24,27 @@ export default function RootLayout() {
 
 function RootLayoutInner() {
   const colorScheme = useColorScheme();
-  const { session, loading } = useAuth();
+  const { session, loading, isGuest } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
   const segmentsKey = segments.join('/');
+  const authenticated = !!session || isGuest;
 
   useEffect(() => {
     if (loading) return;
     const onLoginScreen = segments[0] === 'login';
 
-    if (!session && !onLoginScreen) {
+    if (!authenticated && !onLoginScreen) {
       router.replace('/login');
-    } else if (session && onLoginScreen) {
+    } else if (authenticated && onLoginScreen) {
       router.replace('/');
     }
     // router/segments は expo-router 側で参照が変わりやすく、依存に含めると
     // replace()→再レンダー→依存変化→再度replace() の無限ループになるため
     // 安定した値（segmentsKey）だけを依存にする。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, loading, segmentsKey]);
+  }, [authenticated, loading, segmentsKey]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
