@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import {
   Alert,
@@ -45,7 +46,8 @@ export default function SettingsScreen() {
   const isDark = colorScheme === 'dark';
   const { themeMode, setThemeMode, workHoursPerStudy, setWorkHoursPerStudy, conversionRatio } = useSettings();
   const { resetAll } = useTime();
-  const { user, signOut } = useAuth();
+  const { user, isGuest, signOut, exitGuest } = useAuth();
+  const router = useRouter();
   const { sessions, subjectiveEntries, reactionResults } = useStudyLogContext();
   const { entries: activityEntries, tags: activityTags } = useFatigueContext();
 
@@ -117,6 +119,11 @@ export default function SettingsScreen() {
     ]);
   };
 
+  const handleGoToLogin = async () => {
+    await exitGuest();
+    router.replace('/login');
+  };
+
   const handleDeleteData = () => {
     Alert.alert(
       'データを削除しますか？',
@@ -148,16 +155,29 @@ export default function SettingsScreen() {
 
           {/* ── アカウント ── */}
           <SectionHeader title="アカウント" color={mutedColor} />
-          <View style={cardStyle}>
-            <View style={styles.listRow}>
-              <ThemedText style={styles.listLabel}>メールアドレス</ThemedText>
-              <Text style={[styles.listValue, { color: mutedColor }]}>{user?.email ?? '-'}</Text>
+          {isGuest ? (
+            <View style={cardStyle}>
+              <ThemedText style={[styles.rowLabel, { marginBottom: 8 }]}>
+                ゲストモードで利用中です。ログイン・アカウント作成をすると、記録を他の端末とも同期できます。
+              </ThemedText>
+              <TouchableOpacity style={styles.listRow} onPress={handleGoToLogin} activeOpacity={0.7}>
+                <Text style={[styles.listLabel, { color: AppColors.accent, fontWeight: '600' }]}>
+                  ログイン / アカウント作成
+                </Text>
+              </TouchableOpacity>
             </View>
-            <View style={[styles.divider, { backgroundColor: dividerColor }]} />
-            <TouchableOpacity style={styles.listRow} onPress={handleSignOut} activeOpacity={0.7}>
-              <Text style={styles.destructiveText}>ログアウト</Text>
-            </TouchableOpacity>
-          </View>
+          ) : (
+            <View style={cardStyle}>
+              <View style={styles.listRow}>
+                <ThemedText style={styles.listLabel}>メールアドレス</ThemedText>
+                <Text style={[styles.listValue, { color: mutedColor }]}>{user?.email ?? '-'}</Text>
+              </View>
+              <View style={[styles.divider, { backgroundColor: dividerColor }]} />
+              <TouchableOpacity style={styles.listRow} onPress={handleSignOut} activeOpacity={0.7}>
+                <Text style={styles.destructiveText}>ログアウト</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* ── 外観 ── */}
           <SectionHeader title="外観" color={mutedColor} />

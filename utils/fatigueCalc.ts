@@ -8,11 +8,19 @@ import type {
 } from '@/types/fatigue';
 
 /**
+ * 疲労スコアの補正倍率。
+ * 従来のロジックは実感より判定が緩かった（がばがば）ため、
+ * 各軸のスコアを一律1.5倍して閾値超過の判定が早めに出るようにする。
+ */
+const FATIGUE_SEVERITY_MULTIPLIER = 1.5;
+
+/**
  * 疲労スコアを計算する純粋関数。
  *
  * スコアの意味:
  *   身体的: タグ重み × 時間（例: 部活5点×2h = 10点）
  *   認知的: タグ重み × 時間 ＋ ベースライン（学校/仕事時間 ÷ workHoursPerStudy）
+ * 上記に FATIGUE_SEVERITY_MULTIPLIER を掛けた値を最終スコアとする。
  *
  * v4 拡張: ScheduleEntry.source が 'calendar' でも同じロジックで動く。
  */
@@ -51,6 +59,9 @@ export function calcFatigueScore(
       cognitive += score;
     }
   }
+
+  physical *= FATIGUE_SEVERITY_MULTIPLIER;
+  cognitive *= FATIGUE_SEVERITY_MULTIPLIER;
 
   return { physical, cognitive, total: physical + cognitive };
 }

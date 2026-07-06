@@ -13,7 +13,7 @@ type Mode = 'signIn' | 'signUp';
 export default function LoginScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, continueAsGuest } = useAuth();
 
   const [mode, setMode] = useState<Mode>('signIn');
   const [email, setEmail] = useState('');
@@ -51,6 +51,10 @@ export default function LoginScreen() {
     setMode(m => (m === 'signIn' ? 'signUp' : 'signIn'));
     setError(null);
     setInfo(null);
+  };
+
+  const handleGuest = () => {
+    continueAsGuest();
   };
 
   return (
@@ -110,6 +114,12 @@ export default function LoginScreen() {
                   : 'すでにアカウントをお持ちの方はこちら'}
               </Text>
             </TouchableOpacity>
+
+            <TouchableOpacity onPress={handleGuest} style={styles.guestBtn} activeOpacity={0.7}>
+              <Text style={[styles.guestBtnText, { color: mutedColor }]}>
+                アカウントを作らずにゲストとして見る
+              </Text>
+            </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -158,4 +168,6 @@ const styles = StyleSheet.create({
   submitBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '700' },
   switchModeBtn: { alignItems: 'center', marginTop: 20, padding: 8 },
   switchModeText: { fontSize: 13 },
+  guestBtn: { alignItems: 'center', marginTop: 4, padding: 8 },
+  guestBtnText: { fontSize: 13, textDecorationLine: 'underline' },
 });
