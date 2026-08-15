@@ -41,3 +41,25 @@ app-example
 # generated native folders
 /ios
 /android
+
+# ==== Secrets / credentials (追加: 機密情報の取りこぼし防止) ====
+# すべての env ファイルを除外（説明用の *.example だけ残す）
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Claude / エディタのローカル上書き設定
+.claude/settings.local.json
+.claude/*.local.json
+
+# クラウド認証情報・鍵ファイル
+**/serviceAccount*.json
+google-services.json
+GoogleService-Info.plist
+*.keystore
+
+# 汎用の秘密ファイル
+secrets/
+*.secret
+credentials*.json
