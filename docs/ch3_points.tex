@@ -1,0 +1,594 @@
+% =====================================================================
+\section{要点}
+
+この章では、フォルダの地図 → データの形 → 1つの機能の流れ → 細部、の順に読んでいく。
+
+\subsection{フォルダの地図}
+
+\begin{kkbadgepoint}[要点]{最初に読むのは赤の場所だけでいい}
+  \texttt{mobile/} には約50個のファイルがあるが、このアプリ独自の中心は
+  \texttt{app/(tabs)/}・\texttt{context/}・\texttt{types/} の3か所。
+  \texttt{components/} の一部や \texttt{hooks/} の一部は、Expo が最初に用意した雛形がそのまま残っているだけで、
+  4つは今どこからも使われていない。自動生成の \texttt{node\_modules/} や \texttt{dist/} は読む必要がない。
+\end{kkbadgepoint}
+
+\textgt{\texttt{mobile/}（アプリ本体）の中身}
+
+\begin{longtblr}[entry=none,label=none]{
+  colspec={Q[l,wd=4.3cm] X[l] Q[c,wd=1.8cm] Q[c,wd=1.6cm]},
+  width=\linewidth,
+  rowhead=1,
+  row{1}={bg=kkdark, fg=white, font=\small\gtfamily},
+  hlines={black!15},
+  cells={font=\small},
+}
+場所 & 役割（一言） & 種類 & 重要度 \\
+\SetRow{bg=impAbg} \texttt{app/(tabs)/\_layout.tsx} & 下のタブ5つと、共有データの箱（Provider）の配置 & 独自 & \lvA \\
+\SetRow{bg=impAbg} \texttt{app/(tabs)/index.tsx} & ホーム（キャラ・累計・今日の時間） & 独自 & \lvA \\
+\SetRow{bg=impAbg} \texttt{app/(tabs)/timer.tsx} & タイマー（開始・停止と前後チェック） & 独自 & \lvA \\
+\SetRow{bg=impBbg} \texttt{app/(tabs)/history.tsx} & カレンダー（日ごとの学習時間） & 独自 & \lvB \\
+\SetRow{bg=impBbg} \texttt{app/(tabs)/fatigue.tsx} & 疲労チェック（予定の入力とバッテリー） & 独自 & \lvB \\
+\SetRow{bg=impBbg} \texttt{app/(tabs)/settings.tsx} & 設定（テーマ・換算・グラフ・書き出し・削除） & 独自 & \lvB \\
+\SetRow{bg=impBbg} \texttt{app/\_layout.tsx} & 一番外側の枠。ログインしていなければログイン画面へ送る & 独自 & \lvB \\
+\SetRow{bg=impBbg} \texttt{app/login.tsx} & ログイン・新規登録・ゲストで使う & 独自 & \lvB \\
+\SetRow{bg=impCbg} \texttt{app/modal.tsx} & 雛形の見本画面。どこからも開かれていない & 雛形（未使用） & \lvC \\
+\SetRow{bg=impAbg} \texttt{context/} & アプリ全体で共有するデータと、その保存・読込（5つ） & 独自 & \lvA \\
+\SetRow{bg=impAbg} \texttt{types/} & データの形（型）の定義だけ（2つ） & 独自 & \lvA \\
+\SetRow{bg=impBbg} \texttt{utils/} & 計算・変換の関数。画面を持たない（7つ） & 独自 & \lvB \\
+\SetRow{bg=impBbg} \texttt{hooks/use-fatigue.ts} & 疲労の状態を計算して画面に渡す & 独自 & \lvB \\
+\SetRow{bg=impCbg} \texttt{hooks/} の残り3つ & ダーク／ライトの判定と色選び & 雛形 & \lvC \\
+\SetRow{bg=impBbg} \texttt{components/} の独自8つ & 疲労バッテリー・ぼかし・反応時間テスト・点数選び・グラフ2つ・前後チェック2つ & 独自 & \lvB \\
+\SetRow{bg=impCbg} \texttt{components/} の雛形4つ（使用中） & \texttt{themed-text}・\texttt{themed-view}・\texttt{haptic-tab}・\texttt{ui/icon-symbol} & 雛形 & \lvC \\
+\SetRow{bg=impDbg} \texttt{components/} の雛形4つ（未使用） & \texttt{hello-wave}・\texttt{parallax-scroll-view}・\texttt{external-link}・\texttt{ui/collapsible} & 雛形（未使用） & \lvD \\
+\SetRow{bg=impBbg} \texttt{lib/supabase.ts} & Supabase（ログイン用サーバー）への接続 & 独自 & \lvB \\
+\SetRow{bg=impCbg} \texttt{constants/theme.ts} & 色とフォント。\texttt{Colors} は雛形、\texttt{AppColors}（緑）は独自 & 混在 & \lvC \\
+\SetRow{bg=impBbg} \texttt{package.json} & 使うライブラリとコマンドの一覧 & 設定 & \lvB \\
+\SetRow{bg=impCbg} \texttt{app.json} & アプリ名・アイコン・対応 OS など Expo の設定 & 設定 & \lvC \\
+\SetRow{bg=impCbg} \texttt{tsconfig.json} & TypeScript の設定（\texttt{strict}、\texttt{@/} の別名） & 設定 & \lvC \\
+\SetRow{bg=impCbg} \texttt{eslint.config.js} & 書き方のチェックの設定 & 雛形 & \lvC \\
+\SetRow{bg=impCbg} \texttt{assets/} & アイコンや起動画面の画像 & 素材 & \lvC \\
+\SetRow{bg=impCbg} \texttt{README.md} & Expo の雛形の説明書のまま & 雛形 & \lvC \\
+\SetRow{bg=impDbg} \texttt{node\_modules/}・\texttt{package-lock.json} & インストールしたライブラリの本体と、その版の記録 & 自動生成 & \lvD \\
+\SetRow{bg=impDbg} \texttt{.expo/}・\texttt{dist/}・\texttt{expo-env.d.ts} & 開発中の一時ファイル・Web 版の完成品・型の補助 & 自動生成 & \lvD \\
+\SetRow{bg=impDbg} \texttt{.env.local} & Supabase の接続先などの秘密の値。開かない & 秘密 & \lvD \\
+\end{longtblr}
+
+\texttt{@/} は \texttt{tsconfig.json} で決めた「\texttt{mobile/} を指す別名」。
+\texttt{import \{ useTime \} from '@/context/TimeContext'} は「\texttt{mobile/context/TimeContext.tsx} から読み込む」という意味になる。
+
+\textgt{リポジトリ直下（アプリの外）}
+
+\begin{center}
+\begin{tblr}{
+  colspec={Q[l,wd=4.3cm] X[l] Q[c,wd=1.6cm]},
+  width=\linewidth,
+  row{1}={bg=kkdark, fg=white, font=\small\gtfamily},
+  hlines={black!15},
+  cells={font=\small},
+}
+場所 & 役割（一言） & 重要度 \\
+\SetRow{bg=impBbg} \texttt{log/} & 開発ログ V1〜V3。「なぜ」の手がかりがある & \lvB \\
+\SetRow{bg=impCbg} \texttt{CLAUDE.md}・\texttt{AGENTS.md} & AI への指示（フォルダ構成と安全ルール） & \lvC \\
+\SetRow{bg=impCbg} \texttt{netlify.toml} & Web 版を公開する設定 & \lvC \\
+\SetRow{bg=impCbg} \texttt{.gitignore} & Git に入れないファイルの一覧 & \lvC \\
+\end{tblr}
+\end{center}
+
+\subsection{データの形（types/）}
+
+\begin{kkbadgepoint}[要点]{コードを読む前に「何を覚えているアプリか」を知る}
+  \texttt{types/} には処理が1行もなく、「データがどんな項目でできているか」だけが書いてある。
+  ここを先に見ると、画面や context のコードが「この項目を作っている」「この項目を足している」と読めるようになる。
+  学習時間そのもの（累計と日ごと）は \texttt{types/} ではなく、\texttt{context/TimeContext.tsx} の中で形を決めている。
+\end{kkbadgepoint}
+
+\textgt{TypeScript の型の読み方}（このあとのコードに出てくるもの）
+\begin{itemize}
+  \item \texttt{interface 名前 \{ … \}}：項目の一覧。Python の \texttt{TypedDict} や \texttt{dataclass} に近い。
+  \item \texttt{subject?: string}：\texttt{?} は「あってもなくてもよい」。Python の \texttt{Optional[str]}。
+  \item \texttt{'pre' | 'post'}：\texttt{|} は「どれか1つ」。この場合は2つの文字列のどちらか。Python の \texttt{Literal['pre', 'post']}。
+  \item \texttt{number | null}：数字か、何もない（\texttt{null}）か。
+  \item \texttt{Record<string, number>}：キーが文字列、値が数字の辞書。Python の \texttt{dict[str, int]}。
+  \item \texttt{ReactionTrial[]}：\texttt{[]} は配列。Python の \texttt{list[ReactionTrial]}。
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[font=\footnotesize,
+  ent/.style={draw=#1, fill=white, line width=0.9pt, rounded corners=2pt, inner sep=4pt},
+  arr/.style={-{Stealth[length=2.2mm]}, line width=0.8pt, draw=black!60},
+  lab/.style={font=\scriptsize, fill=white, inner sep=1.2pt}]
+  \node[ent=impA] (ss) at (0,0) {\begin{tabular}{@{}l@{}}
+    \textcolor{impA}{\textgt{StudySession}}（1回の学習）\\\hline
+    \texttt{id}：この記録の番号\\
+    \texttt{subject?}：科目\\
+    \texttt{startedAt}／\texttt{endedAt?}：開始・終了の日時\\
+    \texttt{durationMinutes}：学習した分数\\
+    \texttt{reward}：面白さ・重要度・締切\\
+    \texttt{subjectivePreId?} ほか：チェックの番号
+  \end{tabular}};
+  \node[ent=impB] (se) at (7.9,1.3) {\begin{tabular}{@{}l@{}}
+    \textcolor{impB}{\textgt{SubjectiveEntry}}（自分で感じた疲れ）\\\hline
+    \texttt{sessionId?}：どの学習のものか\\
+    \texttt{timing}：\texttt{'pre'}（前）か \texttt{'post'}（後）\\
+    \texttt{score}：疲労感 1〜5\\
+    \texttt{note?}：メモ
+  \end{tabular}};
+  \node[ent=impB] (rr) at (7.9,-2.1) {\begin{tabular}{@{}l@{}}
+    \textcolor{impB}{\textgt{ReactionTimeResult}}（反応時間テスト）\\\hline
+    \texttt{sessionId?}：どの学習のものか\\
+    \texttt{timing}：前か後\\
+    \texttt{trials}：1回ずつの結果\\
+    \texttt{avgReactionMs}：平均の反応時間\\
+    \texttt{accuracy}：正確さ 0〜1
+  \end{tabular}};
+  \node[ent=impC] (ra) at (0,-4.3) {\begin{tabular}{@{}l@{}}
+    \textcolor{impC}{\textgt{RewardAppraisal}}（やる気の材料）\\\hline
+    \texttt{interest}：面白さ 1〜5\\
+    \texttt{importance}：重要度 1〜5\\
+    \texttt{hasDeadline}／\texttt{deadlineUrgency?}：締切
+  \end{tabular}};
+  \node[ent=impC] (rt) at (7.9,-5.4) {\begin{tabular}{@{}l@{}}
+    \textcolor{impC}{\textgt{ReactionTrial}}（1回分）\\\hline
+    \texttt{delayMs}：光るまでの待ち時間\\
+    \texttt{reactionMs}：反応時間（\texttt{null} は失敗）
+  \end{tabular}};
+  \draw[arr] (se.west) -- node[lab,above,sloped]{\texttt{sessionId} で結ぶ} (ss.east);
+  \draw[arr] (rr.west) -- node[lab,below,sloped]{\texttt{sessionId} で結ぶ} (ss.east);
+  \draw[arr] (ss.south) -- node[lab,right]{\texttt{reward} として中に持つ} (ra.north);
+  \draw[arr] (rr.south) -- node[lab,right]{\texttt{trials} に5回分} (rt.north);
+\end{tikzpicture}
+\end{center}
+\figcap{図4　前後チェックの記録の形（\texttt{types/studyLog.ts}）。矢印は「どれとつながるか」}
+
+\begin{codebox}{impA}{types/studyLog.ts}{1}
+export const LOCAL_USER_ID = 'local-user-001';
+
+export interface RewardAppraisal {
+  interest: number; // 1-5 面白さ
+  importance: number; // 1-5 重要度
+  hasDeadline: boolean;
+  deadlineUrgency?: number; // 1-5、hasDeadline=trueの時のみ
+}
+
+export interface StudySession {
+  id: string;
+  userId: string;
+  subject?: string;
+  startedAt: string; // ISO
+  endedAt?: string; // ISO
+  durationMinutes: number;
+  reward: RewardAppraisal | null;
+  subjectivePreId?: string;
+  subjectivePostId?: string;
+  reactionPreId?: string;
+  reactionPostId?: string;
+  /** 将来の「予定」欄用。現時点ではUIなし、欠損許容。 */
+  plannedFor?: string; // YYYY-MM-DD
+}
+
+export type SubjectiveTiming = 'pre' | 'post';
+
+export interface SubjectiveEntry {
+  id: string;
+  userId: string;
+  sessionId?: string;
+  timing: SubjectiveTiming;
+  score: number; // 1-5（疲労感・高いほど疲れている）
+  note?: string;
+  timestamp: string; // ISO
+}
+
+export interface ReactionTrial {
+  delayMs: number;
+  reactionMs: number | null; // null = 反応なし/フライング
+}
+\end{codebox}
+
+1行目の \texttt{LOCAL\_USER\_ID} は、全部の記録に入れている仮のユーザー番号。
+ログインしても、記録はこの同じ番号で端末に保存される。
+14行目の \texttt{// ISO} は、日時を \texttt{"2026-11-17T05:30:00.000Z"} のような文字列で持つという意味（末尾の \texttt{Z} は世界標準時）。
+
+疲労の予定は、もう1つのファイルで形を決めている。
+
+\begin{codebox}{impB}{types/fatigue.ts}{1}
+export type FatigueAxis = 'cognitive' | 'physical';
+export type FatigueWeight = 1 | 2 | 5;
+export type FatigueLevel = 'ok' | 'caution' | 'danger';
+
+export interface ScheduleTag {
+  id: string;
+  name: string;
+  axis: FatigueAxis;
+  weight: FatigueWeight;
+  emoji: string;
+}
+
+/**
+ * 正規化された予定エントリ。
+ * v3: source='manual'（手動入力）のみ。
+ * v4: source='calendar'（Googleカレンダー等）を追加予定。
+ * calcFatigueScore() はどちらのソースも同一ロジックで処理できる。
+ */
+export interface ScheduleEntry {
+  id: string;
+  tagId: string;
+  date: string; // YYYY-MM-DD
+  durationMinutes: number;
+  source: 'manual' | 'calendar';
+  title?: string; // v4でカレンダーイベント名を上書き
+  externalId?: string; // v4でカレンダーイベントID
+}
+\end{codebox}
+
+\texttt{ScheduleTag} は「部活」「授業」のような予定の種類で、\texttt{axis} が身体（\texttt{physical}）か頭（\texttt{cognitive}）か、
+\texttt{weight} がその重さ（1・2・5のどれか）。\texttt{ScheduleEntry} は「その種類の予定を、何日に何分やったか」。
+21行目の \texttt{tagId} で \texttt{ScheduleTag} とつながる。
+
+最後に、学習時間そのものの形。これは \texttt{TimeContext.tsx} の中にある。
+
+\begin{codebox}{impA}{context/TimeContext.tsx}{6}
+const STORAGE_KEY = 'timeLogData';
+
+type SavedData = {
+  totalMinutes: number;
+  history: Record<string, number>;
+};
+\end{codebox}
+
+\texttt{totalMinutes} は累計の分数、\texttt{history} は「日付 → その日の分数」の辞書。
+たとえば \texttt{\{ "2026-11-16": 50, "2026-11-17": 45 \}} のようになる。
+
+\textgt{端末の保存箱（AsyncStorage）の一覧}
+
+\begin{center}
+\begin{tblr}{
+  colspec={Q[l,wd=3.6cm] X[l] Q[l,wd=3.6cm] Q[c,wd=1.6cm]},
+  width=\linewidth,
+  row{1}={bg=kkdark, fg=white, font=\small\gtfamily},
+  hlines={black!15},
+  cells={font=\small},
+}
+キー（箱の名前） & 中身 & 担当 & 重要度 \\
+\SetRow{bg=impAbg} \texttt{timeLogData} & 累計の分数と、日ごとの分数 & \texttt{TimeContext.tsx} & \lvA \\
+\SetRow{bg=impAbg} \texttt{studyLogData\_v1} & 学習1回ごとの記録・前後の疲労感・反応時間 & \texttt{StudyLogContext.tsx} & \lvA \\
+\SetRow{bg=impBbg} \texttt{fatigueData\_v3} & 予定の種類と、日ごとの予定 & \texttt{FatigueContext.tsx} & \lvB \\
+\SetRow{bg=impCbg} \texttt{appSettings} & テーマと換算比率 & \texttt{SettingsContext.tsx} & \lvC \\
+\SetRow{bg=impCbg} \texttt{authGuestMode} & ゲストで使っているかどうか & \texttt{AuthContext.tsx} & \lvC \\
+\end{tblr}
+\end{center}
+
+\subsection{1つの機能を縦に追う：タイマー → 保存 → ホーム表示}
+
+ここがこのノートの中心。「タイマーで開始して、停止すると、ホームの『今日の学習時間』が増える」までを、
+図5の番号①〜⑬の順に、元のコードで追う。
+
+\begin{center}
+\begin{tikzpicture}[font=\scriptsize,
+  head/.style={draw=#1, fill=#1!10, line width=0.8pt, rounded corners=2pt,
+    minimum width=2.6cm, minimum height=1.35cm, align=center, anchor=north, inner sep=2pt},
+  msg/.style={-{Stealth[length=2mm]}, line width=0.7pt, draw=black!75},
+  ret/.style={-{Stealth[length=2mm]}, line width=0.7pt, draw=black!60, dashed},
+  ml/.style={fill=white, inner sep=1.2pt, align=center, above}]
+  \node[head=impC] (hu) at (0,0) {\footnotesize\textgt{あなた}};
+  \node[head=impA] (ht) at (2.95,0) {\footnotesize\textgt{タイマー画面}\\\texttt{timer.tsx}};
+  \node[head=impB] (hm) at (5.9,0) {\footnotesize\textgt{前後チェック}\\\texttt{PreSessionModal}\\\texttt{PostSessionModal}};
+  \node[head=impA] (hc) at (8.85,0) {\footnotesize\textgt{共有データ}\\\texttt{StudyLogContext}\\\texttt{TimeContext}};
+  \node[head=impB] (hs) at (11.8,0) {\footnotesize\textgt{端末の保存箱}\\AsyncStorage};
+  \node[head=impA] (hh) at (14.75,0) {\footnotesize\textgt{ホーム画面}\\\texttt{index.tsx}};
+  \foreach \n in {hu,ht,hm,hc,hs,hh} { \draw[black!30, dashed] (\n.south) -- (\n.south |- 0,-12.6); }
+  % 開始
+  \draw[msg] (0,-1.9) -- node[ml]{①「開始」を押す} (2.95,-1.9);
+  \draw[msg] (2.95,-2.75) -- node[ml]{② 前チェックを開く} (5.9,-2.75);
+  \draw[msg] (5.9,-3.6) -- node[ml]{③ 入力を渡す（\texttt{onDone}）} (2.95,-3.6);
+  \draw[msg] (2.95,-4.45) -- node[ml]{④ \texttt{startSession()} で記録を作る} (8.85,-4.45);
+  \draw[msg] (8.85,-5.3) -- node[ml]{⑤ \texttt{studyLogData\_v1} に保存} (11.8,-5.3);
+  \node[draw=impA, fill=impAbg, rounded corners=2pt, align=center, inner sep=2pt] at (2.95,-6.15)
+    {⑥ 1秒ごとに \texttt{seconds} を +1};
+  % 停止
+  \draw[msg] (0,-7.0) -- node[ml]{⑦「停止」を押す} (2.95,-7.0);
+  \draw[msg] (2.95,-7.85) -- node[ml]{⑧ 後チェックを開く} (5.9,-7.85);
+  \draw[msg] (5.9,-8.7) -- node[ml]{⑨ 入力を渡す（\texttt{onDone}）} (2.95,-8.7);
+  \draw[msg] (2.95,-9.55) -- node[ml]{⑩ \texttt{addMinutes(分)} と \texttt{finishSession()}} (8.85,-9.55);
+  \draw[msg] (8.85,-10.4) -- node[ml]{⑪ \texttt{timeLogData} に保存} (11.8,-10.4);
+  \draw[msg] (8.85,-11.25) -- node[ml]{⑫ 値が変わったので描き直す（\texttt{useTime()}）} (14.75,-11.25);
+  \draw[ret] (14.75,-12.1) -- node[ml]{⑬「今日の学習時間」が増えて見える} (0,-12.1);
+\end{tikzpicture}
+\end{center}
+\figcap{図5　タイマーを使ってから、ホームの数字が増えるまで（実線＝呼び出し、点線＝あなたに見える結果）}
+
+\subsubsection{①② 「開始」を押すと、前チェックが開く}
+
+\begin{codebox}{impA}{app/(tabs)/timer.tsx}{132}
+        <View style={styles.buttonArea}>
+          {status === 'idle' && (
+            <TouchableOpacity
+              style={[styles.btn, styles.btnPrimary]}
+              onPress={() => setPreModalVisible(true)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.btnTextLight}>開始</Text>
+            </TouchableOpacity>
+          )}
+\end{codebox}
+
+133行目の \texttt{status === 'idle' \&\&} は「状態が \texttt{idle}（止まっている）のときだけ、このボタンを表示する」という書き方。
+136行目の \texttt{onPress} が押したときの処理で、\texttt{setPreModalVisible(true)} で前チェックの画面を「見える」にする。
+\textgt{このボタンはまだタイマーを動かさない。}動かすのは③のあと。
+
+タイマー画面が覚えている値（state）は、関数の最初にまとめて書いてある。
+
+\begin{codebox}{impA}{app/(tabs)/timer.tsx}{23}
+export default function TimerScreen() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  const { addMinutes } = useTime();
+  const { startSession, finishSession, addSubjectiveEntry, addReactionResult } = useStudyLogContext();
+  const [status, setStatus] = useState<TimerStatus>('idle');
+  const [seconds, setSeconds] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [preModalVisible, setPreModalVisible] = useState(false);
+  const [postModalVisible, setPostModalVisible] = useState(false);
+  const currentSessionIdRef = useRef<string | null>(null);
+\end{codebox}
+
+27〜28行目で、共有データ（Context）から使う関数を取り出している。
+29〜33行目が state で、\texttt{status} は \texttt{'idle'}（停止）・\texttt{'running'}（計測中）・\texttt{'paused'}（一時停止）のどれか。
+34行目の \texttt{currentSessionIdRef} は「今計っている学習の番号」で、画面の見た目に関係しないので state ではなく \texttt{useRef} にしている。
+
+\subsubsection{③④⑤ 前チェックの入力を受け取り、記録を作って保存する}
+
+\begin{codebox}{impA}{app/(tabs)/timer.tsx}{61}
+  const handlePreSessionDone: ComponentProps<typeof PreSessionModal>['onDone'] = input => {
+    const sessionId = startSession({ subject: input.subject, reward: input.reward });
+    if (input.subjectiveScore != null) {
+      addSubjectiveEntry({
+        sessionId,
+        timing: 'pre',
+        score: input.subjectiveScore,
+        note: input.subjectiveNote,
+      });
+    }
+    if (input.reaction) {
+      addReactionResult({
+        sessionId,
+        timing: 'pre',
+        trials: input.reaction.trials,
+        avgReactionMs: input.reaction.avgReactionMs,
+        accuracy: input.reaction.accuracy,
+      });
+    }
+    currentSessionIdRef.current = sessionId;
+    setPreModalVisible(false);
+    setStatus('running');
+  };
+\end{codebox}
+
+前チェックで「完了」を押すと、この関数が呼ばれる（③）。
+62行目で \texttt{startSession} を呼び、新しい学習の記録を作ってその番号をもらう（④）。
+63〜79行目は、疲労感や反応時間を入力した場合だけ、それも記録する（入力は任意なので \texttt{if} で確かめている）。
+82行目の \texttt{setStatus('running')} で、ここで初めてタイマーが動き出す。
+
+\begin{codebox}{impA}{context/StudyLogContext.tsx}{107}
+  const startSession = useCallback(
+    (input: { subject?: string; reward: RewardAppraisal | null; plannedFor?: string }) => {
+      const id = genId();
+      const session: StudySession = {
+        id,
+        userId: LOCAL_USER_ID,
+        subject: input.subject,
+        startedAt: new Date().toISOString(),
+        durationMinutes: 0,
+        reward: input.reward,
+        plannedFor: input.plannedFor,
+      };
+      setSessions(prev => {
+        const next = [...prev, session];
+        persist({ sessions: next });
+        return next;
+      });
+      return id;
+    },
+    [persist]
+  );
+\end{codebox}
+
+110〜118行目で、図4の \texttt{StudySession} の形どおりに記録を作る。この時点では \texttt{durationMinutes} は 0。
+120行目で、今までの記録の配列の後ろに新しい記録を足した配列を作り、
+121行目の \texttt{persist} で AsyncStorage の \texttt{studyLogData\_v1} に保存する（⑤）。
+
+\begin{pyaside}
+  120行目の \texttt{[.{}.{}.prev, session]} は \texttt{[*prev, session]}、
+  つまり「\texttt{prev} の中身を全部並べて、最後に \texttt{session} を足した新しいリスト」。
+  \texttt{prev.append(session)} のように元のリストを書き換えないのは、
+  React が「新しい値になった」と気づいて描き直すため。
+\end{pyaside}
+
+\subsubsection{⑥ 1秒ごとに数える}
+
+\begin{codebox}{impA}{app/(tabs)/timer.tsx}{36}
+  useEffect(() => {
+    if (status === 'running') {
+      intervalRef.current = setInterval(() => {
+        setSeconds(prev => prev + 1);
+      }, 1000);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [status]);
+\end{codebox}
+
+54行目の \texttt{[status]} により、この処理は \texttt{status} が変わったときだけ動く。
+\texttt{'running'} になったら、38〜40行目の \texttt{setInterval} で 1000 ミリ秒（1秒）ごとに \texttt{seconds} を 1 増やす。
+一時停止や停止で \texttt{'running'} でなくなったら、43行目の \texttt{clearInterval} で止める。
+48〜53行目の \texttt{return} の中身は「後片付け」で、画面を離れたときにもタイマーを止める。
+
+\begin{pyaside}
+  開発ログ V1 によると、\texttt{setInterval}／\texttt{clearInterval} は \texttt{threading.Timer} にあたる。\evLog
+  39行目の \texttt{prev => prev + 1} は \texttt{lambda prev: prev + 1}。
+\end{pyaside}
+
+\subsubsection{⑦⑧⑨⑩ 「停止」を押し、後チェックのあとで分数を足す}
+
+\begin{codebox}{impA}{app/(tabs)/timer.tsx}{56}
+  const handleStop = () => {
+    setStatus('idle');
+    setPostModalVisible(true);
+  };
+\end{codebox}
+
+停止ボタンは、タイマーを止めて（57行目）後チェックを開く（58行目）だけ。まだ何も保存しない。
+
+\begin{codebox}{impA}{app/(tabs)/timer.tsx}{85}
+  const handlePostSessionDone: ComponentProps<typeof PostSessionModal>['onDone'] = input => {
+    const elapsedMinutes = Math.round(seconds / 60);
+    addMinutes(elapsedMinutes);
+
+    const sessionId = currentSessionIdRef.current;
+    if (sessionId) {
+      finishSession(sessionId, elapsedMinutes);
+\end{codebox}
+
+後チェックで「完了」を押すと、この関数が呼ばれる（⑨）。
+86行目で秒を分に直す。\texttt{Math.round} は四捨五入なので、29秒までは 0 分、30秒からは 1 分になる。
+87行目の \texttt{addMinutes} で \texttt{TimeContext} に分数を足し、
+91行目の \texttt{finishSession} で \texttt{StudySession} に終了時刻と分数を書き込む（⑩）。
+このあと92〜108行目は、③のときと同じように \texttt{'post'}（後）の疲労感と反応時間を記録する。
+
+\begin{codebox}{impA}{app/(tabs)/timer.tsx}{109}
+    }
+    currentSessionIdRef.current = null;
+    setPostModalVisible(false);
+    setSeconds(0);
+  };
+\end{codebox}
+
+最後に、学習の番号を空にして、後チェックを閉じ、秒を 0 に戻す。
+
+\subsubsection{⑪ TimeContext が分数を足して保存する}
+
+\begin{codebox}{impA}{context/TimeContext.tsx}{59}
+  useEffect(() => {
+    if (!loaded) return;
+    const data: SavedData = { totalMinutes, history };
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data)).catch(() => {});
+  }, [totalMinutes, history, loaded]);
+
+  const addMinutes = (minutes: number) => {
+    if (minutes <= 0) return;
+    const today = todayKey();
+    setTotalMinutes(prev => prev + minutes);
+    setHistory(prev => ({
+      ...prev,
+      [today]: (prev[today] ?? 0) + minutes,
+    }));
+  };
+\end{codebox}
+
+\textgt{読む順番は下から。}⑩で呼ばれるのは 65行目の \texttt{addMinutes}。
+\begin{itemize}
+  \item 66行目：0 分以下なら何もしない。
+  \item 67行目：今日の日付 \texttt{"2026-11-17"} のような文字列を作る（\texttt{utils/date.ts} の関数）。
+  \item 68行目：累計に足す。
+  \item 69〜72行目：日ごとの辞書の、今日の分に足す。今日の分がまだなければ 0 から足す（\texttt{?? 0}）。
+\end{itemize}
+68〜72行目で state が変わると、59〜63行目の \texttt{useEffect} が「\texttt{totalMinutes} と \texttt{history} が変わった」と気づいて動き、
+JSON の文字列にして \texttt{timeLogData} に保存する（⑪）。
+\textgt{「足す」処理と「保存する」処理が分かれていて、保存は state の変化をきっかけに自動で起きる}のがポイント。
+
+\begin{pyaside}
+  62行目の \texttt{JSON.stringify(data)} は \texttt{json.dumps(data)}。
+  70〜71行目の \texttt{\{ .{}.{}.prev, [today]: … \}} は \texttt{\{**prev, today: …\}}。
+  71行目の \texttt{prev[today] ?? 0} は \texttt{prev.get(today, 0)} とほぼ同じ。
+\end{pyaside}
+
+\subsubsection{⑫⑬ ホーム画面が描き直される}
+
+\begin{codebox}{impA}{context/TimeContext.tsx}{29}
+export function TimeProvider({ children }: { children: ReactNode }) {
+  const [totalMinutes, setTotalMinutes] = useState(0);
+  const [history, setHistory] = useState<Record<string, number>>({});
+  const [loaded, setLoaded] = useState(false);
+
+  const todayMinutes = history[todayKey()] ?? 0;
+\end{codebox}
+
+\texttt{todayMinutes}（今日の分数）は保存されている値ではなく、34行目で \texttt{history} から毎回計算している。
+\texttt{history} が変わると \texttt{TimeProvider} が描き直され、この値も新しくなる。
+そして、\texttt{useTime()} でこの値を使っているすべての画面に「値が変わった」と伝わる（⑫）。
+
+\begin{codebox}{impA}{app/(tabs)/index.tsx}{61}
+export default function HomeScreen() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const { totalMinutes, todayMinutes } = useTime();
+  const { fatigueState } = useFatigue();
+\end{codebox}
+
+\begin{codebox}{impA}{app/(tabs)/index.tsx}{170}
+          <View style={styles.statItem}>
+            <ThemedText style={styles.statLabel}>今日の学習時間</ThemedText>
+            <View style={styles.statValueRow}>
+              <ThemedText style={styles.statValueBig}>{todayMinutes}</ThemedText>
+              <ThemedText style={styles.statUnit}>分</ThemedText>
+            </View>
+          </View>
+\end{codebox}
+
+ホーム画面は 64行目で \texttt{useTime()} から値を受け取り、173行目の \texttt{\{todayMinutes\}} の場所に表示する。
+ホーム画面のコードには「記録を読み込む」処理も「描き直す」処理も書いていない。
+\textgt{Context の値が変わると、それを使っている画面は React が自動で描き直す}から（⑬）。
+キャラクターの成長（累計 60 分・300 分・600 分・1500 分で次の姿になる）も、同じ \texttt{totalMinutes} から決まる。
+
+\begin{kkbadgepoint}[要点]{この流れから分かる、アプリの基本の形}
+  画面（\texttt{timer.tsx}・\texttt{index.tsx}）は、記録を自分では持たない。
+  記録を変えたいときは Context の関数（\texttt{addMinutes} など）を呼び、表示したいときは Context の値（\texttt{todayMinutes} など）を受け取るだけ。
+  保存は Context の中の \texttt{useEffect} が、値が変わるたびに自動で行う。
+  だから「タイマー画面で足す」と「ホーム画面に出る」が、互いのコードを知らなくてもつながる。
+  ほかの機能（疲労・設定）も、この同じ形でできている。
+\end{kkbadgepoint}
+
+\subsection{細部：出てきたライブラリと関数}
+
+この章のコードに出てきたものだけをまとめる。「どこから来たか」で色を分けた。
+
+\begin{longtblr}[entry=none,label=none]{
+  colspec={Q[l,wd=3.3cm] Q[l,wd=2.4cm] X[l] Q[l,wd=3.4cm]},
+  width=\linewidth,
+  rowhead=1,
+  row{1}={bg=kkdark, fg=white, font=\small\gtfamily},
+  hlines={black!15},
+  cells={font=\small},
+}
+名前 & どこから来たか & 何をするか & Pythonでいうと \\
+\SetRow{bg=impAbg} \texttt{useState} & React & 覚えておく値と、それを変える関数を作る & インスタンス変数＋setter \\
+\SetRow{bg=impAbg} \texttt{useEffect} & React & 指定した値が変わったときに処理を動かす & 値を見張るコールバック \\
+\SetRow{bg=impAbg} \texttt{createContext}・\texttt{useContext} & React & 共有データの箱を作る・箱から取り出す & Flask の \texttt{g} \\
+\SetRow{bg=impBbg} \texttt{useRef} & React & 描き直しても消えない入れ物 & インスタンス変数 \\
+\SetRow{bg=impBbg} \texttt{useCallback} & React & 関数を毎回作り直さずに覚えておく & なし（速さのための工夫） \\
+\SetRow{bg=impAbg} \texttt{AsyncStorage.getItem}・\texttt{setItem} & ライブラリ（async-storage） & 端末の保存箱から読む・書く & ファイルの読み書き \\
+\SetRow{bg=impBbg} \texttt{JSON.stringify}・\texttt{JSON.parse} & JavaScript 標準 & データと文字列を相互に変換 & \texttt{json.dumps}・\texttt{json.loads} \\
+\SetRow{bg=impBbg} \texttt{setInterval}・\texttt{clearInterval} & JavaScript 標準 & 一定時間ごとに処理を動かす・止める & \texttt{threading.Timer} \\
+\SetRow{bg=impBbg} \texttt{Math.round} & JavaScript 標準 & 四捨五入 & \texttt{round}（ただし 2.5 は Python だと 2、JS だと 3） \\
+\SetRow{bg=impBbg} \texttt{new Date().toISOString()} & JavaScript 標準 & 今の日時を世界標準時の文字列にする & \texttt{datetime.now(timezone.utc).isoformat()} \\
+\SetRow{bg=impAbg} \texttt{todayKey}・\texttt{localDateKey} & 自作（\texttt{utils/date.ts}） & 端末の時刻で \texttt{"YYYY-MM-DD"} を作る & \texttt{date.today().isoformat()} \\
+\SetRow{bg=impBbg} \texttt{genId} & 自作（\texttt{StudyLogContext.tsx}） & 時刻と乱数から記録の番号を作る & \texttt{uuid4()} の簡易版 \\
+\SetRow{bg=impCbg} \texttt{View}・\texttt{Text}・\texttt{TouchableOpacity} & React Native & 箱・文字・押せる部品 & tkinter の \texttt{Frame}・\texttt{Label}・\texttt{Button} \\
+\SetRow{bg=impCbg} \texttt{StyleSheet.create} & React Native & 見た目の設定をまとめる & tkinter の \texttt{configure()}（開発ログ V1） \\
+\SetRow{bg=impCbg} \texttt{SafeAreaView} & ライブラリ（safe-area-context） & 画面の切り欠きを避けて表示する & なし \\
+\SetRow{bg=impCbg} \texttt{=>}（アロー関数） & JavaScript の書き方 & 短く書ける関数 & \texttt{lambda} \\
+\SetRow{bg=impCbg} \texttt{.{}.{}.}（スプレッド構文） & JavaScript の書き方 & 配列や辞書の中身を広げる & \texttt{*list}・\texttt{**dict} \\
+\SetRow{bg=impCbg} \texttt{??} & JavaScript の書き方 & 左が空（\texttt{null}／\texttt{undefined}）なら右を使う & \texttt{x if x is not None else 0} \\
+\SetRow{bg=impCbg} \texttt{条件 \&\& 部品} & JavaScript の書き方 & 条件が正しいときだけ部品を表示 & \texttt{if 条件: 表示} \\
+\end{longtblr}
+

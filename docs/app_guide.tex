@@ -1,0 +1,113 @@
+\documentclass[paper=a4,article]{jlreq}
+
+\usepackage[header={time\_log\_app 解説ノート}]{kk}
+\usepackage{kk-badge}
+\usepackage{listings}
+\tcbuselibrary{listings}
+\usepackage{tabularray}
+\usetikzlibrary{positioning,arrows.meta,calc}
+
+% ---------- 重要度の色 ----------
+\definecolor{impA}{HTML}{C0392B}   % 最重要（赤）
+\definecolor{impAbg}{HTML}{FBE9E7}
+\definecolor{impB}{HTML}{D9822B}   % 重要（橙）
+\definecolor{impBbg}{HTML}{FDF1E4}
+\definecolor{impC}{HTML}{6F7B85}   % 参考（灰）
+\definecolor{impCbg}{HTML}{EEF1F3}
+\definecolor{impD}{HTML}{A9B0B6}   % 対象外（薄い灰）
+\definecolor{impDbg}{HTML}{F7F8F9}
+% ---------- 根拠ラベルの色 ----------
+\definecolor{evlog}{HTML}{2F5B82}
+\definecolor{evcode}{HTML}{2E7D4F}
+\definecolor{evguess}{HTML}{8E44AD}
+\definecolor{codebg}{HTML}{F8F9FB}
+
+% 重要度タグ（本文用）
+\newtcbox{\kkTag}[1]{on line, colback=#1, colframe=#1, colupper=white,
+  arc=1.5pt, boxrule=0pt, boxsep=0pt, left=3pt, right=3pt, top=1.5pt, bottom=1.5pt,
+  fontupper=\footnotesize\gtfamily}
+\newcommand{\tagA}{\kkTag{impA}{最重要}}
+\newcommand{\tagB}{\kkTag{impB}{重要}}
+\newcommand{\tagC}{\kkTag{impC}{参考}}
+\newcommand{\tagD}{\kkTag{impD}{対象外}}
+% 重要度（表用）
+\newcommand{\lvA}{\textcolor{impA}{\textgt{■最重要}}}
+\newcommand{\lvB}{\textcolor{impB}{\textgt{■重要}}}
+\newcommand{\lvC}{\textcolor{impC}{\textgt{■参考}}}
+\newcommand{\lvD}{\textcolor{impD}{\textgt{■対象外}}}
+
+% 根拠ラベル
+\newtcbox{\kkEv}[1]{on line, colback=white, colframe=#1, colupper=#1,
+  arc=1.5pt, boxrule=0.5pt, boxsep=0pt, left=2pt, right=2pt, top=1pt, bottom=1pt,
+  fontupper=\scriptsize\gtfamily}
+\newcommand{\evLog}{\kkEv{evlog}{根拠：開発ログ}}
+\newcommand{\evCode}{\kkEv{evcode}{根拠：コード}}
+\newcommand{\evGuess}{\kkEv{evguess}{推測}}
+
+% Python で言うと（注記枠）
+\newenvironment{pyaside}{\begin{KKfbox9ao}[Pythonでいうと][1pt][evcode]}{\end{KKfbox9ao}}
+
+% 図の題
+\newcommand{\figcap}[1]{\par\smallskip{\centering\small\textgt{#1}\par}\medskip}
+
+% ---------- コードの見た目 ----------
+\lstdefinelanguage{TSX}{
+  morekeywords={import,from,export,default,function,const,let,return,if,else,type,
+    interface,async,await,new,true,false,null,undefined,try,catch,finally,typeof},
+  sensitive=true,
+  morecomment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  morestring=[b]',
+  morestring=[b]",
+  morestring=[b]`,
+}
+\lstdefinelanguage{plain}{morestring=[b]",morecomment=[l]{\#}}
+\lstdefinestyle{kkts}{
+  language=TSX,
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{evlog}\bfseries,
+  commentstyle=\color{evcode},
+  stringstyle=\color{impA!75!black},
+  numbers=left, numberstyle=\tiny\color{impC}, numbersep=6pt,
+  xleftmargin=1.8em,
+  breaklines=true, breakatwhitespace=false,
+  postbreak=\mbox{\textcolor{impC}{$\hookrightarrow$}\space},
+  columns=fullflexible, keepspaces=true, showstringspaces=false,
+  upquote=true, tabsize=2,
+}
+% 元のコード枠：[追加オプション]{重要度の色}{ファイル}{開始行}
+\newtcblisting{codebox}[4][]{%
+  enhanced, breakable, listing only,
+  colback=codebg, colframe=#2, boxrule=0.5pt, leftrule=2.2mm, arc=1mm,
+  left=1mm, right=1mm, top=0.5mm, bottom=0.5mm,
+  title={\texttt{#3}\hfill{\scriptsize 元のコード／#4 行目から}},
+  fonttitle=\small\gtfamily, coltitle=white, colbacktitle=#2,
+  listing options={style=kkts, firstnumber=#4, #1},
+  before skip=6pt, after skip=8pt}
+
+% hyperref は必ず最後に読み込む。
+\usepackage{hyperref}
+\hypersetup{
+  luatex,
+  pdfencoding=auto,
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=blue
+}
+
+\title{学習記録アプリの中身を読む}
+\date{\today}
+
+\begin{document}
+
+\kkcoverspine{TIME LOG APP}{学習記録アプリの中身を読む}{技術・フォルダ・データ・処理の流れを、元のコードで追う}{\today}
+
+\tableofcontents
+\newpage
+
+\input{ch1_intro}
+\input{ch2_definitions}
+\input{ch3_points}
+\input{ch4_examples}
+
+\end{document}

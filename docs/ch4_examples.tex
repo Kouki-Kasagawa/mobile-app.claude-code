@@ -1,0 +1,99 @@
+% =====================================================================
+\section{例題}
+
+\begin{kkbadgeexample}[四捨五入と、0 分の扱い]{問題1}
+  タイマーで「開始」してから 25 秒で「停止」し、後チェックを完了した。
+  ホームの「今日の学習時間」は何分増えるか。また、90 秒だった場合はどうか。
+\end{kkbadgeexample}
+\begin{kkbadgenote}[解答]
+  \textgt{25 秒のとき：増えない（0 分）。}
+  \texttt{timer.tsx} 86行目で \texttt{Math.round(25 / 60)}、つまり \texttt{Math.round(0.416…)} を計算して 0 になる。
+  87行目で \texttt{addMinutes(0)} が呼ばれるが、\texttt{TimeContext.tsx} 66行目の \texttt{if (minutes <= 0) return;} で何もせずに終わる。
+  ただし \texttt{StudySession} の記録は④で作られているので、\texttt{finishSession} によって \texttt{durationMinutes} が 0 の記録として残る。
+
+  \textgt{90 秒のとき：2 分増える。}
+  \texttt{Math.round(90 / 60)} は \texttt{Math.round(1.5)} で、JavaScript では 2 になる（Python の \texttt{round(1.5)} も 2 だが、\texttt{round(2.5)} は 2 なので注意）。
+\end{kkbadgenote}
+
+\begin{kkbadgeexample}[日付をまたぐとどうなるか]{問題2}
+  23時50分に「開始」し、翌日の0時20分に「停止」した（ちょうど 30 分）。
+  カレンダーでは、どちらの日に何分記録されるか。
+\end{kkbadgeexample}
+\begin{kkbadgenote}[解答]
+  \textgt{停止した翌日に 30 分。}
+  日付を決めているのは \texttt{TimeContext.tsx} 67行目の \texttt{const today = todayKey();} で、
+  これは \texttt{addMinutes} が呼ばれたとき、つまり後チェックを完了した瞬間に実行される。
+  そのため、開始した日ではなく停止した日に 30 分すべてが足され、前日には 1 分も入らない。
+
+  なお、\texttt{todayKey()} は端末の時刻（日本時間）で日付を作る（\texttt{utils/date.ts}）。
+  以前は世界標準時の日付を使っていたため、日本時間の 0〜9 時は前日として記録されていた。
+  これを直したのがコミット \texttt{4b9acaa}。\evCode
+\end{kkbadgenote}
+
+\begin{kkbadgeexample}[アプリを閉じても消えない理由]{問題3}
+  アプリを閉じて開き直しても、累計学習時間が 0 に戻らないのはなぜか。
+  また、\texttt{TimeContext.tsx} の \texttt{loaded} がなかったら、何が起きる可能性があるか。
+\end{kkbadgeexample}
+\begin{kkbadgenote}[解答]
+  \textgt{起動時に保存箱から読み戻しているから。}
+  \texttt{TimeProvider} が最初に描かれたとき、次の \texttt{useEffect}（\texttt{[]} なので最初の1回だけ動く）が
+  \texttt{timeLogData} を読み、\texttt{totalMinutes} と \texttt{history} に入れ直す。
+
+\begin{codebox}{impA}{context/TimeContext.tsx}{36}
+  useEffect(() => {
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const data = JSON.parse(raw);
+          setTotalMinutes(data.totalMinutes ?? 0);
+
+          if (data.history) {
+            setHistory(data.history);
+          } else if (data.savedDate && (data.todayMinutes ?? 0) > 0) {
+            // 旧フォーマットからの移行
+            setHistory({ [data.savedDate]: data.todayMinutes });
+          }
+        }
+      } catch {
+        // 読み込み失敗時はデフォルト値のまま
+      } finally {
+        setLoaded(true);
+      }
+    })();
+  }, []);
+\end{codebox}
+
+  \textgt{\texttt{loaded} がないと、保存していた記録が 0 で上書きされるおそれがある。}
+  起動した直後は \texttt{totalMinutes} が 0、\texttt{history} が空の状態で始まる。
+  保存の \texttt{useEffect}（59〜63行目）は値が変わるたびに動くので、読み込みが終わる前にこの「空の状態」を保存してしまうかもしれない。
+  60行目の \texttt{if (!loaded) return;} は、54行目で読み込みが終わったと分かるまで保存を止めておくためのもの。
+  この理由は開発ログ V1 の Step 5 にも書かれている。\evLog
+\end{kkbadgenote}
+
+% =====================================================================
+\section{まとめ}
+
+\subsection{今回の結論}
+\begin{itemize}
+  \item このアプリは TypeScript で書かれ、React Native と Expo によって iPhone・Android・Web の3つで動く。記録は端末の中（AsyncStorage）にだけ保存し、Supabase はログインだけに使う。
+  \item 独自の中心は \texttt{app/(tabs)/}（画面）・\texttt{context/}（共有データと保存）・\texttt{types/}（データの形）の3か所。
+  \item 画面は記録を持たず、Context の関数を呼ぶだけ。保存と描き直しは自動で起きる。
+\end{itemize}
+
+\subsection{復習するところ}
+\begin{itemize}
+  \item \tagA\ 図5の①〜⑬を、コードを見ずに言えるか。
+  \item \tagA\ \texttt{context/TimeContext.tsx}（90行）を最初から最後まで読む。今回ほぼ全部を見ている。
+  \item \tagB\ \texttt{types/studyLog.ts} と図4を見比べ、項目の意味を言えるか。
+  \item \tagB\ 定義の章の React の用語（state・\texttt{useEffect}・Context）を、Python の言葉で説明できるか。
+\end{itemize}
+
+\subsection{次に持ち越す疑問}
+\begin{enumerate}
+  \item \textgt{疲労スコアはどう計算されているか。}\texttt{utils/fatigueCalc.ts} と \texttt{hooks/use-fatigue.ts} は今回読んでいない。同じ「縦に追う」やり方で読める。
+  \item \textgt{学習時間が2か所に記録されているのは意図どおりか。}\texttt{timeLogData}（累計と日ごと）と、\texttt{studyLogData\_v1} の各 \texttt{StudySession} の \texttt{durationMinutes} の両方に同じ分数が入る。
+  \item \textgt{機種を変えたら記録はどうなるか。}記録は端末の中にしかないので、今のままでは引き継げない。
+  \item \textgt{アプリを裏に回している間も、タイマーは正しく数えるか。}1秒ごとに \texttt{seconds} を足す仕組みなので、スマホがアプリを止めている間は数えられない可能性がある（未確認）。
+\end{enumerate}
+

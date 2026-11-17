@@ -1,0 +1,320 @@
+% =====================================================================
+\section{定義}
+
+この章では、このアプリを作っている技術を1つずつ定義し、「なぜそれを使っているのか」を書く。
+最後に、コードを読むときに何度も出てくる React の用語をまとめる。
+
+\begin{center}
+\begin{tikzpicture}[font=\small,
+  box/.style={draw=#1, fill=#1!7, line width=0.9pt, rounded corners=3pt,
+    minimum height=0.95cm, align=center, inner sep=3pt},
+  arr/.style={-{Stealth[length=2.2mm]}, line width=0.8pt, draw=black!60}]
+  \node[box=impA, minimum width=14cm] (ts) at (0,0)
+    {\textgt{TypeScript}：あなた（と AI）が書く言語　\texttt{.ts}／\texttt{.tsx}};
+  \node[box=impA, minimum width=14cm] (re) at (0,-1.35)
+    {\textgt{React}：画面を「部品」と「状態」で組み立てる考え方};
+  \node[box=impB, minimum width=6.8cm] (rn) at (-3.6,-2.7)
+    {\textgt{React Native}：部品をスマホの本物の部品にする};
+  \node[box=impB, minimum width=6.8cm] (rw) at (3.6,-2.7)
+    {\textgt{react-native-web}：部品をブラウザの部品にする};
+  \node[box=impB, minimum width=14cm] (ex) at (0,-4.05)
+    {\textgt{Expo（SDK 54）}：道具箱とビルドの肩代わり　＋　\textgt{expo-router}：ファイル＝画面};
+  \node[box=impC, minimum width=4.4cm] (ios) at (-4.8,-5.5) {iPhone};
+  \node[box=impC, minimum width=4.4cm] (and) at (0,-5.5) {Android};
+  \node[box=impC, minimum width=4.4cm] (web) at (4.8,-5.5) {Web（Netlify で公開）};
+  \draw[arr] (ts) -- (re);
+  \draw[arr] (re.south -| rn) -- (rn);
+  \draw[arr] (re.south -| rw) -- (rw);
+  \draw[arr] (rn) -- (rn |- ex.north);
+  \draw[arr] (rw) -- (rw |- ex.north);
+  \draw[arr] (ex.south -| ios) -- (ios);
+  \draw[arr] (ex.south -| and) -- (and);
+  \draw[arr] (ex.south -| web) -- (web);
+\end{tikzpicture}
+\end{center}
+\figcap{図2　技術の積み重ね（上で書いたものが、下へ行くほど「動くアプリ」に変わる）}
+
+\subsection{言語：TypeScript}
+
+\begin{kkbadgepoint}[定義]{TypeScript（タイプスクリプト）}
+  JavaScript に「型（この変数には数字しか入らない、など）」を書けるようにした言語。
+  書いた型が合わないと、\textgt{動かす前に}エラーで教えてくれる。
+  最後は JavaScript に変換されて動く。このアプリのコードは、設定ファイルを除いてほぼすべて TypeScript。
+\end{kkbadgepoint}
+
+\textgt{なぜ使っているか。}
+README に「\texttt{create-expo-app} で作った」とあり、その標準のひな形が TypeScript だから。\evCode
+さらに \texttt{tsconfig.json} で \texttt{"strict": true}（型のチェックを最も厳しくする）が有効になっている。\evCode
+型があると、AI が書いたコードの間違いも動かす前に見つかりやすい。\evGuess
+
+\textgt{拡張子で言語を見分ける。}
+\begin{center}
+\begin{tblr}{
+  colspec={Q[l,wd=2.6cm] X[l] Q[l,wd=5.2cm]},
+  width=\linewidth,
+  row{1}={bg=kkdark, fg=white, font=\small\gtfamily},
+  hlines={black!15},
+  cells={font=\small},
+}
+拡張子 & 中身 & このアプリの例 \\
+\SetRow{bg=impAbg} \texttt{.tsx} & TypeScript ＋ JSX（画面の形を HTML のように書ける） & 画面と部品（\texttt{app/}・\texttt{components/}） \\
+\SetRow{bg=impAbg} \texttt{.ts} & TypeScript（画面を持たない処理） & \texttt{types/}・\texttt{utils/}・\texttt{lib/} \\
+\SetRow{bg=impBbg} \texttt{.json} & 設定データ（JSON 形式） & \texttt{package.json}・\texttt{app.json} \\
+\SetRow{bg=impCbg} \texttt{.js} & JavaScript（型なし） & \texttt{eslint.config.js} \\
+\SetRow{bg=impCbg} \texttt{.toml} & 設定データ（TOML 形式） & \texttt{netlify.toml} \\
+\SetRow{bg=impCbg} \texttt{.md} & メモ（Markdown） & \texttt{log/}・\texttt{AGENTS.md} \\
+\end{tblr}
+\end{center}
+
+TypeScript の書き方を、日付を作る小さな関数で見てみる。
+
+\begin{codebox}{impB}{utils/date.ts}{7}
+export function localDateKey(date: Date = new Date()): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+\end{codebox}
+
+\begin{pyaside}
+  \texttt{def local\_date\_key(date: datetime = datetime.now()) -> str:} とほぼ同じ。
+  \texttt{: Date} が引数の型、\texttt{): string} が戻り値の型。
+  \texttt{const} は「あとで入れ直さない変数」。
+  最後の行のバッククォート文字列は、Python の f 文字列 \texttt{f"\{y\}-\{m\}-\{d\}"} にあたる。
+\end{pyaside}
+
+\subsection{画面の仕組み：React と React Native}
+
+\begin{kkbadgepoint}[定義]{React と React Native}
+  \textgt{React} は、画面を「部品（コンポーネント）」の組み合わせで作り、
+  部品が覚えている値（状態）が変わると、その部品を自動で描き直す仕組み。
+  \textgt{React Native} は、React で書いた部品を、iPhone や Android の本物の部品に変えて表示する仕組み。
+  \texttt{react-native-web} は、同じ部品をブラウザ用に変える。
+\end{kkbadgepoint}
+
+\textgt{なぜ使っているか。}
+1つのコードで iPhone・Android・Web の3つに出せるから。
+\texttt{app.json} に \texttt{ios}・\texttt{android}・\texttt{web} の3つの設定が並んでいることが、その使い方を示している。\evCode
+ほかの方法（Swift と Kotlin で別々に作るなど）より、1人で作るときの手間が少ない。\evGuess
+
+\subsection{開発の土台：Expo と expo-router}
+
+\begin{kkbadgepoint}[定義]{Expo と expo-router}
+  \textgt{Expo} は、React Native のアプリを作るための道具箱。
+  保存・通知・画像などの部品（\texttt{expo-xxx}）と、アプリの組み立て（ビルド）を肩代わりする仕組みをまとめて提供する。
+  このアプリは \textgt{SDK 54} を使う（\texttt{package.json} の \texttt{"expo": "\textasciitilde 54.0.34"}）。
+  \textgt{expo-router} は、\texttt{app/} フォルダにファイルを置くと、そのファイルがそのまま1つの画面になる仕組み。
+\end{kkbadgepoint}
+
+expo-router には、ファイル名の決まりが2つある。
+\begin{itemize}
+  \item \texttt{\_layout.tsx}：同じフォルダの画面を包む「枠」。タブやヘッダーなど、共通の部分を書く。
+  \item \texttt{(tabs)} のような括弧つきのフォルダ：画面をまとめるグループ。URL には出てこない。
+\end{itemize}
+
+\textgt{なぜ使っているか。}
+README のとおり \texttt{create-expo-app} で作ったプロジェクトで、expo-router はその標準。\evCode
+Xcode や Android Studio の細かい設定をしなくても、Expo Go というアプリで実機ですぐ試せる。\evGuess
+
+アプリの入口は \texttt{package.json} に書いてある。
+
+\begin{codebox}[language=plain]{impB}{package.json}{1}
+{
+  "name": "time_log_app",
+  "main": "expo-router/entry",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "lint": "expo lint"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^15.0.3",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-navigation/bottom-tabs": "^7.4.0",
+    "@react-navigation/elements": "^2.6.3",
+    "@react-navigation/native": "^7.1.8",
+    "@supabase/supabase-js": "^2.110.0",
+    "expo": "~54.0.34",
+    "expo-blur": "~15.0.8",
+\end{codebox}
+
+3行目の \texttt{"main": "expo-router/entry"} が「起動したら expo-router に任せる」という意味。
+5〜11行目の \texttt{scripts} は、\texttt{npm run web} などで呼べるコマンドの一覧。
+12行目からの \texttt{dependencies} が、使っているライブラリの一覧（21行目以降も続く）。
+
+\subsection{データの置き場所：AsyncStorage と Supabase}
+
+\begin{kkbadgepoint}[定義]{AsyncStorage と Supabase}
+  \textgt{AsyncStorage} は、端末の中にある「名前（キー）→ 文字列」の保存箱。
+  このアプリは、学習記録・疲労・設定を JSON の文字列にして、ここに入れている。
+  \textgt{Supabase} は、ネット上のサーバーをすぐ使えるサービス。
+  このアプリでは\textgt{ログイン（メールとパスワード）だけ}に使っている。
+\end{kkbadgepoint}
+
+\begin{pyaside}
+  開発ログ V1 によると、AsyncStorage は \texttt{json.dump}／\texttt{json.load} で端末のファイルに読み書きするのとほぼ同じ（ただし非同期）。\evLog
+\end{pyaside}
+
+\textgt{大事な事実。}コードの中で Supabase を呼んでいるのは \texttt{context/AuthContext.tsx} と \texttt{lib/supabase.ts} だけで、
+使っているのはログイン用の \texttt{supabase.auth} だけ。学習記録をサーバーへ送るコードはない。\evCode
+つまり、\textgt{別の端末で同じアカウントにログインしても、学習記録は引き継がれない。}
+
+\textgt{なぜ使っているか。}
+AsyncStorage はサーバーがいらず、端末の中だけで完結するので、最初に作るのに向いている。\evGuess
+Supabase は、ログインの仕組み（パスワードの安全な保管など）を自分で作らずに済む。\evGuess
+
+Supabase との接続は \texttt{lib/supabase.ts} にまとまっている。
+
+\begin{codebox}{impB}{lib/supabase.ts}{12}
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+\end{codebox}
+
+接続先と鍵は、\texttt{mobile/.env.local} にある \texttt{EXPO\_PUBLIC\_SUPABASE\_URL} と
+\texttt{EXPO\_PUBLIC\_SUPABASE\_ANON\_KEY} から読む。値そのものは秘密なので、このノートには載せていない。
+
+\begin{codebox}{impB}{lib/supabase.ts}{34}
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storage: ssrSafeStorage,
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+  },
+});
+\end{codebox}
+
+36行目では、ログイン状態の保存先にも AsyncStorage を使っている。
+\texttt{ssrSafeStorage} という包み方をしているのは、Web 版を作るときにサーバー側で動く処理には \texttt{window} がなく、そのままだと落ちるから。\evCode
+38行目の \texttt{persistSession: true} で、アプリを閉じてもログインしたままになる。
+
+\subsection{公開：Netlify}
+
+\begin{kkbadgepoint}[定義]{Netlify（ネットリファイ）}
+  作った Web 版のファイル（HTML など）を置いて、インターネットで公開してくれるサービス。
+  設定はリポジトリ直下の \texttt{netlify.toml} に書く。
+\end{kkbadgepoint}
+
+\begin{codebox}[language=plain]{impC}{netlify.toml}{1}
+[build]
+  # アプリ本体は mobile/ にある。command と publish は base からの相対パス
+  base = "mobile"
+  command = "npx expo export -p web"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "24"
+
+[[redirects]]
+  from = "/*"
+  to = "/+not-found.html"
+  status = 404
+\end{codebox}
+
+Netlify は \texttt{mobile/} に入り（3行目）、\texttt{npx expo export -p web} で Web 版を作って（4行目）、
+できあがった \texttt{dist/} を公開する（5行目）。
+\texttt{app.json} の \texttt{"output": "static"} により、Web 版は「サーバーのいらない、ただのファイルの集まり」として作られる。\evCode
+そういうファイルを無料で手軽に公開できるのが Netlify を選ぶ理由として考えられる。\evGuess
+
+\subsection{技術のまとめ}
+
+\begin{center}
+\begin{tblr}{
+  colspec={Q[l,wd=3.1cm] X[l] X[l] Q[c,wd=1.7cm]},
+  width=\linewidth,
+  row{1}={bg=kkdark, fg=white, font=\small\gtfamily},
+  hlines={black!15},
+  cells={font=\small},
+}
+技術 & 役割 & なぜ & 根拠 \\
+\SetRow{bg=impAbg} TypeScript & 書く言語 & ひな形の標準。型で早く間違いに気づく & コード／推測 \\
+\SetRow{bg=impAbg} React & 部品と状態で画面を作る & React Native の土台 & 推測 \\
+\SetRow{bg=impBbg} React Native & スマホの部品に変える & 1つのコードで3つに出せる & コード／推測 \\
+\SetRow{bg=impBbg} Expo（SDK 54） & 道具箱とビルド & \texttt{create-expo-app} で作った & コード \\
+\SetRow{bg=impBbg} expo-router & ファイル＝画面 & ひな形の標準 & コード \\
+\SetRow{bg=impAbg} Context & 全画面でデータを共有 & 全画面で同じ値を使うため & ログ \\
+\SetRow{bg=impAbg} AsyncStorage & 端末に保存 & サーバーなしで完結する & ログ／推測 \\
+\SetRow{bg=impCbg} Supabase & ログインだけ & ログインを自作しなくて済む & 推測 \\
+\SetRow{bg=impCbg} Netlify & Web 版の公開 & 静的なファイルを手軽に公開 & 推測 \\
+\end{tblr}
+\end{center}
+
+画面の飾りのためのライブラリもある。キャラクターがふわふわ動くのは \texttt{react-native-reanimated}、
+疲労が強いときのぼかしは \texttt{expo-blur}（開発ログ V3 に「Expo 公式で SDK 54 と互換が保証されている」とある \evLog）、
+グラフは \texttt{react-native-svg}、CSV／JSON の書き出しは \texttt{expo-file-system} と \texttt{expo-sharing}。
+
+\subsection{このあと何度も出てくる React の用語}
+
+この先のコードを読むために、React の用語を先に定義しておく。
+
+\begin{center}
+\begin{tblr}{
+  colspec={Q[l,wd=2.9cm] X[l] Q[l,wd=3.5cm] Q[l,wd=3.6cm]},
+  width=\linewidth,
+  row{1}={bg=kkdark, fg=white, font=\small\gtfamily},
+  hlines={black!15},
+  cells={font=\small},
+}
+用語 & 何か & Pythonでいうと & このアプリの例 \\
+コンポーネント & 画面の部品を返す関数。名前は大文字で始める & 画面を組み立てて返す関数 & \texttt{TimerScreen()} \\
+JSX & \texttt{<View>} や \texttt{<Text>} のように、画面の形を HTML 風に書く書き方 & 関数の中に直接書くテンプレート & \texttt{<Text>開始</Text>} \\
+props & 部品に外から渡す値 & 関数の引数 & \texttt{visible}・\texttt{onDone} \\
+state（\texttt{useState}） & 部品が覚えている値。専用の関数で変えると画面が描き直される & \texttt{self.seconds}。ただし代入ではなく \texttt{setSeconds(…)} で変える & \texttt{seconds}・\texttt{status} \\
+\texttt{useEffect} & 描いた後に動かす処理。\texttt{[ ]} に書いた値が変わったときだけ動く & 値の変化を見張る関数 & 1秒ごとのタイマー \\
+\texttt{useRef} & 描き直しても消えないが、変えても描き直さない入れ物 & ただのインスタンス変数 & \texttt{currentSessionIdRef} \\
+Context と Provider & アプリ全体で共有するデータ。Provider で囲んだ内側の画面だけが使える & Flask の \texttt{g}（開発ログ V1） & \texttt{TimeProvider} \\
+フック & \texttt{use} で始まる関数の総称。自分で作ることもできる & なし & \texttt{useTime()} \\
+\end{tblr}
+\end{center}
+
+Context は「どこで囲んでいるか」が大事なので、図3に描いた。外側の箱ほど広い範囲から使える。
+
+\begin{center}
+\begin{tikzpicture}[font=\footnotesize,
+  lab/.style={anchor=north west, inner sep=1pt, align=left}]
+  \draw[impB, fill=impB!4, line width=0.9pt, rounded corners=3pt] (0,0) rectangle (16.4,-7.0);
+  \node[lab] at (0.2,-0.15) {\textcolor{impB}{\textgt{\texttt{AuthProvider}}}：ログインしているか\quad（\texttt{app/\_layout.tsx}）};
+  \draw[impC, fill=impCbg, line width=0.9pt, rounded corners=3pt] (0.35,-0.75) rectangle (16.05,-6.65);
+  \node[lab] at (0.55,-0.9) {\textcolor{impC}{\textgt{\texttt{SettingsProvider}}}：テーマ・換算比率};
+  \draw[black!40, fill=white, line width=0.7pt, rounded corners=3pt] (0.75,-1.55) rectangle (3.65,-6.25);
+  \node[align=center] at (2.2,-3.9) {\textgt{ログイン画面}\\\texttt{login.tsx}\\[4pt]{\scriptsize 学習記録の箱の}\\{\scriptsize 外側にある}};
+  \draw[black!40, fill=white, line width=0.7pt, rounded corners=3pt] (4.0,-1.55) rectangle (15.7,-6.25);
+  \node[lab] at (4.2,-1.7) {\textgt{タブ画面のグループ}\quad（\texttt{app/(tabs)/\_layout.tsx}）};
+  \draw[impA, fill=impA!4, line width=0.9pt, rounded corners=3pt] (4.3,-2.3) rectangle (15.4,-5.95);
+  \node[lab] at (4.5,-2.45) {\textcolor{impA}{\textgt{\texttt{TimeProvider}}}：学習時間（累計と日ごと）};
+  \draw[impB, fill=impB!5, line width=0.9pt, rounded corners=3pt] (4.6,-3.0) rectangle (15.1,-5.65);
+  \node[lab] at (4.8,-3.15) {\textcolor{impB}{\textgt{\texttt{FatigueProvider}}}：疲労（予定とスコア）};
+  \draw[impA, fill=impA!8, line width=0.9pt, rounded corners=3pt] (4.9,-3.7) rectangle (14.8,-5.35);
+  \node[lab] at (5.1,-3.85) {\textcolor{impA}{\textgt{\texttt{StudyLogProvider}}}：前後チェックの記録};
+  \foreach \x/\t in {6.05/ホーム, 7.95/タイマー, 9.85/カレンダー, 11.75/疲労, 13.65/設定} {
+    \node[draw=black!50, fill=white, rounded corners=2pt, minimum width=1.7cm, minimum height=0.6cm] at (\x,-4.8) {\t};
+  }
+\end{tikzpicture}
+\end{center}
+\figcap{図3　Provider（共有データの箱）の入れ子。タブの5画面は、すべての箱の内側にある}
+
+図3の入れ子は、コードではタグの入れ子としてそのまま書かれている。
+
+\begin{codebox}{impA}{app/(tabs)/\_layout.tsx}{12}
+export default function TabLayout() {
+  const colorScheme = useColorScheme();
+
+  return (
+    <TimeProvider>
+      <FatigueProvider>
+        <StudyLogProvider>
+          <Tabs
+            screenOptions={{
+              tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+              headerShown: false,
+              tabBarButton: HapticTab,
+            }}
+\end{codebox}
+
+16〜18行目で3つの Provider が順に包み、その内側の \texttt{<Tabs>} にタブの5画面がぶら下がる。
+Context を「学習時間」「疲労」「前後チェック」に分けているのは、1つにまとめると直すときに互いに影響するから、と開発ログ V3 に書かれている。\evLog
+

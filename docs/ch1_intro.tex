@@ -1,0 +1,97 @@
+% =====================================================================
+\section{DATA}
+\begin{description}
+  \item[タイトル] 学習記録アプリの中身を読む
+  \item[日付] \today
+  \item[科目] 自分のアプリ \texttt{time\_log\_app} のコードを理解する
+  \item[出典範囲] \texttt{mobile/} のコード（コミット \texttt{5c5039a} の時点）と、\texttt{log/} の開発ログ V1〜V3。
+    コードはすべて実際のファイルから行番号つきでそのまま抜き出している。
+\end{description}
+
+% =====================================================================
+\section{導入}
+
+\subsection{このノートを読み終えたらできること}
+\begin{enumerate}
+  \item このアプリが「どの技術で」「なぜそれで」作られているかを、自分の言葉で説明できる。
+  \item フォルダを見て、どこに何があって、どこから読めばいいかが分かる。
+  \item 「タイマーを止めると、ホームの数字が増える」までの流れを、ファイル名と行番号でたどれる。
+\end{enumerate}
+
+\subsection{どんなアプリか（おさらい）}
+学習時間を記録するアプリ。ただし目的は「もっと勉強させること」ではなく、
+\textgt{頑張った分を認めて、疲れているときは休んでいいと伝えること}にある。
+開発ログ V1 では「ストリークやランキングのような外からのごほうびをなくし、努力をほめて、サボった日も責めない」、
+V3 では「疲労を見えるようにして、あえて休むことを肯定する」と書かれている。\evLog
+
+画面は下のタブ5つ（ホーム・タイマー・カレンダー・疲労・設定）と、ログイン画面でできている。
+
+\subsection{このノートの読み方}
+
+\textgt{色は「どれだけ大事か」を表す。}コードの枠、表、図はすべてこの4色で塗り分けている。
+
+\begin{center}
+\begin{tblr}{
+  colspec={Q[c,wd=2.0cm] X[l]},
+  width=0.92\linewidth,
+  hlines={black!15},
+  cells={font=\small},
+}
+\tagA & このアプリ独自の中心部分。\textgt{必ず読む。}ここが分かれば全体がつながる。\\
+\tagB & このアプリ独自の部分。中心を読んだ後に、必要になったら読む。\\
+\tagC & 雛形（Expo が最初に用意したもの）や設定。今は「ある」と知っていれば十分。\\
+\tagD & 自動で作られるもの・秘密の値。\textgt{読まない・触らない。}\\
+\end{tblr}
+\end{center}
+
+\textgt{「なぜ」には根拠のラベルをつけている。}
+\evLog は \texttt{log/} の開発ログに理由が書いてあるもの、
+\evCode はコードの中のコメントに理由が書いてあるもの、
+\evGuess はどこにも書いていないので、一般的な理由から推測したもの。
+推測は、当時の本当の理由と違うことがある。
+
+\textgt{Python と比べる。}開発ログ V1 には「Python でいうと何か」の比較が書かれているので、
+このノートでも同じように \textgt{Pythonでいうと} の枠で比べる。
+
+\subsection{全体像}
+
+図1は、このアプリを「層」に分けた地図。上から順に、画面 → 共有データ → 保存場所 と下りていく。
+このあとの章は、すべてこの図のどこかの話になる。
+
+\begin{center}
+\begin{tikzpicture}[font=\small,
+  layer/.style={draw=#1, fill=#1!7, line width=0.9pt, rounded corners=3pt,
+    minimum width=8cm, minimum height=1.15cm, align=center, inner sep=3pt},
+  side/.style={draw=#1, fill=#1!7, line width=0.9pt, rounded corners=3pt,
+    text width=#2, minimum height=1.15cm, align=center, inner sep=3pt},
+  arr/.style={-{Stealth[length=2.2mm]}, line width=0.8pt, draw=black!65},
+  arr2/.style={{Stealth[length=2.2mm]}-{Stealth[length=2.2mm]}, line width=0.8pt, draw=black!65},
+  lab/.style={font=\scriptsize, fill=white, inner sep=1.2pt}]
+  \node[draw=black!45, rounded corners=3pt, minimum width=8cm, minimum height=0.8cm, align=center]
+    (user) at (0,0) {あなた（スマホのアプリ／ブラウザで開く Web 版）};
+  \node[layer=impA] (app) at (0,-1.8)
+    {\textgt{画面}\quad\texttt{app/}\\{\footnotesize ホーム・タイマー・カレンダー・疲労・設定・ログイン}};
+  \node[layer=impA] (ctx) at (0,-3.9)
+    {\textgt{共有データと保存の係}\quad\texttt{context/}\\{\footnotesize 学習時間・前後チェックの記録・疲労・設定・ログイン状態}};
+  \node[side={impB}{4.0cm}] (comp) at (6.7,-1.8)
+    {\textgt{画面の部品}\\\texttt{components/}};
+  \node[side={impB}{4.0cm}] (utl) at (6.7,-3.9)
+    {\textgt{計算の関数}\\\texttt{utils/}\ \texttt{hooks/}};
+  \node[side={impA}{2.3cm}, minimum height=3.25cm] (typ) at (-6.05,-2.85)
+    {\textgt{データの形}\\\texttt{types/}\\[3pt]{\footnotesize 画面も共有データも\\この形に従う}};
+  \node[side={impB}{3.6cm}] (as) at (-2.1,-6.0)
+    {\textgt{端末の中}\\{\footnotesize AsyncStorage（記録・設定）}};
+  \node[side={impC}{3.6cm}] (sb) at (2.1,-6.0)
+    {\textgt{ネットの向こう}\\{\footnotesize Supabase（ログインだけ）}};
+  \draw[arr] (user.south) -- node[lab,right]{見る・押す} (app.north);
+  \draw[arr] (app.east) -- node[lab,above]{並べる} (comp.west);
+  \draw[arr] (app.south) -- node[lab,right]{読む・書く} (ctx.north);
+  \draw[arr] (ctx.east) -- node[lab,above]{計算を頼む} (utl.west);
+  \draw[arr2] (as.north |- ctx.south) -- node[lab,left]{保存・読込} (as.north);
+  \draw[arr2] (sb.north |- ctx.south) -- node[lab,right]{ログイン確認（\texttt{lib/}）} (sb.north);
+  \draw[impA, dashed, line width=0.7pt] (typ.east |- app.west) -- (app.west);
+  \draw[impA, dashed, line width=0.7pt] (typ.east |- ctx.west) -- (ctx.west);
+\end{tikzpicture}
+\end{center}
+\figcap{図1　アプリ全体の地図（赤＝最重要、橙＝重要、灰＝参考）}
+
