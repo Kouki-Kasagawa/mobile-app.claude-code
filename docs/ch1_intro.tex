@@ -63,7 +63,7 @@ V3 では「疲労を見えるようにして、あえて休むことを肯定�
   layer/.style={draw=#1, fill=#1!7, line width=0.9pt, rounded corners=3pt,
     minimum width=8cm, minimum height=1.15cm, align=center, inner sep=3pt},
   side/.style={draw=#1, fill=#1!7, line width=0.9pt, rounded corners=3pt,
-    text width=#2, minimum height=1.15cm, align=center, inner sep=3pt},
+    minimum height=1.15cm, align=center, inner sep=3pt},
   arr/.style={-{Stealth[length=2.2mm]}, line width=0.8pt, draw=black!65},
   arr2/.style={{Stealth[length=2.2mm]}-{Stealth[length=2.2mm]}, line width=0.8pt, draw=black!65},
   lab/.style={font=\scriptsize, fill=white, inner sep=1.2pt}]
@@ -73,15 +73,15 @@ V3 では「疲労を見えるようにして、あえて休むことを肯定�
     {\textgt{画面}\quad\texttt{app/}\\{\footnotesize ホーム・タイマー・カレンダー・疲労・設定・ログイン}};
   \node[layer=impA] (ctx) at (0,-3.9)
     {\textgt{共有データと保存の係}\quad\texttt{context/}\\{\footnotesize 学習時間・前後チェックの記録・疲労・設定・ログイン状態}};
-  \node[side={impB}{4.0cm}] (comp) at (6.7,-1.8)
+  \node[side=impB, text width=4.0cm] (comp) at (6.7,-1.8)
     {\textgt{画面の部品}\\\texttt{components/}};
-  \node[side={impB}{4.0cm}] (utl) at (6.7,-3.9)
+  \node[side=impB, text width=4.0cm] (utl) at (6.7,-3.9)
     {\textgt{計算の関数}\\\texttt{utils/}\ \texttt{hooks/}};
-  \node[side={impA}{2.3cm}, minimum height=3.25cm] (typ) at (-6.05,-2.85)
+  \node[side=impA, text width=2.3cm, minimum height=3.25cm] (typ) at (-6.05,-2.85)
     {\textgt{データの形}\\\texttt{types/}\\[3pt]{\footnotesize 画面も共有データも\\この形に従う}};
-  \node[side={impB}{3.6cm}] (as) at (-2.1,-6.0)
+  \node[side=impB, text width=3.6cm] (as) at (-2.1,-6.0)
     {\textgt{端末の中}\\{\footnotesize AsyncStorage（記録・設定）}};
-  \node[side={impC}{3.6cm}] (sb) at (2.1,-6.0)
+  \node[side=impC, text width=3.6cm] (sb) at (2.1,-6.0)
     {\textgt{ネットの向こう}\\{\footnotesize Supabase（ログインだけ）}};
   \draw[arr] (user.south) -- node[lab,right]{見る・押す} (app.north);
   \draw[arr] (app.east) -- node[lab,above]{並べる} (comp.west);
