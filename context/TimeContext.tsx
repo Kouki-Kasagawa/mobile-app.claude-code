@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
+import { todayKey } from '@/utils/date';
+
 const STORAGE_KEY = 'timeLogData';
 
 type SavedData = {
@@ -24,16 +26,12 @@ const TimeContext = createContext<TimeContextType>({
   resetAll: () => {},
 });
 
-function todayString(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 export function TimeProvider({ children }: { children: ReactNode }) {
   const [totalMinutes, setTotalMinutes] = useState(0);
   const [history, setHistory] = useState<Record<string, number>>({});
   const [loaded, setLoaded] = useState(false);
 
-  const todayMinutes = history[todayString()] ?? 0;
+  const todayMinutes = history[todayKey()] ?? 0;
 
   useEffect(() => {
     (async () => {
@@ -66,7 +64,7 @@ export function TimeProvider({ children }: { children: ReactNode }) {
 
   const addMinutes = (minutes: number) => {
     if (minutes <= 0) return;
-    const today = todayString();
+    const today = todayKey();
     setTotalMinutes(prev => prev + minutes);
     setHistory(prev => ({
       ...prev,

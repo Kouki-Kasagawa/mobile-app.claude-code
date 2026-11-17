@@ -26,6 +26,7 @@ import { useStudyLogContext } from '@/context/StudyLogContext';
 import { useTime } from '@/context/TimeContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { buildActivityCsv, buildExportJson, buildSessionsCsv, ExportBundle } from '@/utils/exportLog';
+import { todayKey } from '@/utils/date';
 import { saveAndShare } from '@/utils/fileExport';
 import { buildQuadrantPoints } from '@/utils/quadrant';
 
@@ -36,10 +37,6 @@ const THEME_OPTIONS: { mode: ThemeMode; label: string }[] = [
   { mode: 'system', label: 'システム' },
   { mode: 'dark', label: 'ダーク' },
 ];
-
-function todayStr(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 export default function SettingsScreen() {
   const colorScheme = useColorScheme();
@@ -91,7 +88,7 @@ export default function SettingsScreen() {
       const sessionsCsv = buildSessionsCsv(bundle);
       const activityCsv = buildActivityCsv(bundle);
       const combined = `# sessions\n${sessionsCsv}\n\n# activities\n${activityCsv}\n`;
-      await saveAndShare(`study_log_${todayStr()}.csv`, combined, 'text/csv');
+      await saveAndShare(`study_log_${todayKey()}.csv`, combined, 'text/csv');
     } catch {
       Alert.alert('エクスポートに失敗しました');
     } finally {
@@ -104,7 +101,7 @@ export default function SettingsScreen() {
     try {
       const bundle = buildBundle();
       const json = buildExportJson(bundle);
-      await saveAndShare(`study_log_${todayStr()}.json`, json, 'application/json');
+      await saveAndShare(`study_log_${todayKey()}.json`, json, 'application/json');
     } catch {
       Alert.alert('エクスポートに失敗しました');
     } finally {

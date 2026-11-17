@@ -4,17 +4,8 @@ import { useFatigueContext } from '@/context/FatigueContext';
 import { useSettings } from '@/context/SettingsContext';
 import { useTime } from '@/context/TimeContext';
 import type { FatigueState, ScheduleTag } from '@/types/fatigue';
+import { todayKey, yesterdayKey } from '@/utils/date';
 import { buildFatigueState, calcFatigueScore } from '@/utils/fatigueCalc';
-
-function todayStr(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function yesterdayStr(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return d.toISOString().slice(0, 10);
-}
 
 export interface FatigueHookResult {
   fatigueState: FatigueState;
@@ -38,8 +29,8 @@ export function useFatigue(): FatigueHookResult {
   const { workHoursPerStudy } = useSettings();
   const { history } = useTime();
 
-  const today = todayStr();
-  const yesterday = yesterdayStr();
+  const today = todayKey();
+  const yesterday = yesterdayKey();
 
   // タグを Record に変換（calcFatigueScore が要求する形式）
   const tagsMap = useMemo(

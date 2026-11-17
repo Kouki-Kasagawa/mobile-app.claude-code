@@ -19,10 +19,7 @@ import { useFatigueContext } from '@/context/FatigueContext';
 import { useFatigue } from '@/hooks/use-fatigue';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import type { ScheduleTag } from '@/types/fatigue';
-
-function todayStr(): string {
-  return new Date().toISOString().slice(0, 10);
-}
+import { todayKey } from '@/utils/date';
 
 const DURATION_OPTIONS = [30, 60, 90, 120, 180];
 
@@ -64,7 +61,7 @@ export default function FatigueScreen() {
     if (!selectedTag) return;
     addEntry({
       tagId: selectedTag.id,
-      date: todayStr(),
+      date: todayKey(),
       durationMinutes: selectedDuration,
       source: 'manual',
     });
@@ -74,11 +71,11 @@ export default function FatigueScreen() {
   };
 
   const handleMarkRest = () => {
-    markRestDay(todayStr());
+    markRestDay(todayKey());
   };
 
   const handleUnmarkRest = () => {
-    unmarkRestDay(todayStr());
+    unmarkRestDay(todayKey());
   };
 
   const handleRemoveEntry = (id: string) => {
