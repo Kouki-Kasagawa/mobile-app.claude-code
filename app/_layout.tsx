@@ -40,7 +40,7 @@ function RootLayoutInner() {
     } else if (authenticated && onLoginScreen) {
       router.replace('/');
     }
-    // router/segments は expo-router 側で参照が変わりやすく、依存に含めると
+    // routern/segments は expo-router 側で参照が変わりやすく、依存に含めると
     // replace()→再レンダー→依存変化→再度replace() の無限ループになるため
     // 安定した値（segmentsKey）だけを依存にする。
     // eslint-disable-next-line react-hooks/exhaustive-deps
