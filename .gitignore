@@ -43,8 +43,8 @@ yarn-error.*
 app-example
 
 # generated native folders
-/ios
-/android
+/mobile/ios
+/mobile/android
 
 # ==== Secrets / credentials (追加: 機密情報の取りこぼし防止) ====
 # すべての env ファイルを除外（説明用の *.example だけ残す）

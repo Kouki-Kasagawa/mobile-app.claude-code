@@ -1,4 +1,6 @@
 [build]
+  # アプリ本体は mobile/ にある。command と publish は base からの相対パス
+  base = "mobile"
   command = "npx expo export -p web"
   publish = "dist"
 
