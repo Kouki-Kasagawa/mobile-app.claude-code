@@ -67,3 +67,6 @@ GoogleService-Info.plist
 secrets/
 *.secret
 credentials*.json
+
+# 調査資料（論文など著作権のあるもの。公開しない）
+/research/
