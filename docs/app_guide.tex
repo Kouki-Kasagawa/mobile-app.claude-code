@@ -50,6 +50,10 @@
 % 図の題
 \newcommand{\figcap}[1]{\par\smallskip{\centering\small\textgt{#1}\par}\medskip}
 
+% 表が次のページに続くときの文言
+\DefTblrTemplate{contfoot-text}{default}{次のページに続く}
+\DefTblrTemplate{conthead-text}{default}{（前のページの続き）}
+
 % ---------- コードの見た目 ----------
 \lstdefinelanguage{TSX}{
   morekeywords={import,from,export,default,function,const,let,return,if,else,type,
@@ -74,6 +78,8 @@
   postbreak=\mbox{\textcolor{impC}{$\hookrightarrow$}\space},
   columns=fullflexible, keepspaces=true, showstringspaces=false,
   upquote=true, tabsize=2,
+  aboveskip=2pt, belowskip=2pt,
+  literate={~}{{\textasciitilde}}1 {^}{{\textasciicircum}}1,
 }
 % 元のコード枠：[追加オプション]{重要度の色}{ファイル}{開始行}
 \newtcblisting{codebox}[4][]{%
@@ -83,6 +89,14 @@
   title={\texttt{#3}\hfill{\scriptsize 元のコード／#4 行目から}},
   fonttitle=\small\gtfamily, coltitle=white, colbacktitle=#2,
   listing options={style=kkts, firstnumber=#4, #1},
+  before skip=6pt, after skip=8pt}
+% 同じ見た目の枠に lstlisting を直接入れる版：{重要度の色}{ファイル}{開始行}
+\newtcolorbox{codeframe}[3]{%
+  enhanced, breakable,
+  colback=codebg, colframe=#1, boxrule=0.5pt, leftrule=2.2mm, arc=1mm,
+  left=1mm, right=1mm, top=0.5mm, bottom=0.5mm,
+  title={\texttt{#2}\hfill{\scriptsize 元のコード／#3 行目から}},
+  fonttitle=\small\gtfamily, coltitle=white, colbacktitle=#1,
   before skip=6pt, after skip=8pt}
 
 % hyperref は必ず最後に読み込む。

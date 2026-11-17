@@ -369,7 +369,8 @@ export default function TimerScreen() {
 63〜79行目は、疲労感や反応時間を入力した場合だけ、それも記録する（入力は任意なので \texttt{if} で確かめている）。
 82行目の \texttt{setStatus('running')} で、ここで初めてタイマーが動き出す。
 
-\begin{codebox}{impA}{context/StudyLogContext.tsx}{107}
+\begin{codeframe}{impA}{context/StudyLogContext.tsx}{107}
+\begin{lstlisting}[style=kkts, firstnumber=107]
   const startSession = useCallback(
     (input: { subject?: string; reward: RewardAppraisal | null; plannedFor?: string }) => {
       const id = genId();
@@ -391,7 +392,8 @@ export default function TimerScreen() {
     },
     [persist]
   );
-\end{codebox}
+\end{lstlisting}
+\end{codeframe}
 
 110〜118行目で、図4の \texttt{StudySession} の形どおりに記録を作る。この時点では \texttt{durationMinutes} は 0。
 120行目で、今までの記録の配列の後ろに新しい記録を足した配列を作り、
@@ -477,7 +479,8 @@ export default function TimerScreen() {
 
 \subsubsection{⑪ TimeContext が分数を足して保存する}
 
-\begin{codebox}{impA}{context/TimeContext.tsx}{59}
+\begin{codeframe}{impA}{context/TimeContext.tsx}{59}
+\begin{lstlisting}[style=kkts, firstnumber=59]
   useEffect(() => {
     if (!loaded) return;
     const data: SavedData = { totalMinutes, history };
@@ -493,7 +496,8 @@ export default function TimerScreen() {
       [today]: (prev[today] ?? 0) + minutes,
     }));
   };
-\end{codebox}
+\end{lstlisting}
+\end{codeframe}
 
 \textgt{読む順番は下から。}⑩で呼ばれるのは 65行目の \texttt{addMinutes}。
 \begin{itemize}
@@ -563,7 +567,7 @@ export default function HomeScreen() {
 この章のコードに出てきたものだけをまとめる。「どこから来たか」で色を分けた。
 
 \begin{longtblr}[entry=none,label=none]{
-  colspec={Q[l,wd=3.3cm] Q[l,wd=2.4cm] X[l] Q[l,wd=3.4cm]},
+  colspec={Q[l,wd=3.6cm] Q[l,wd=2.3cm] X[l] Q[l,wd=3.8cm]},
   width=\linewidth,
   rowhead=1,
   row{1}={bg=kkdark, fg=white, font=\small\gtfamily},
@@ -576,16 +580,16 @@ export default function HomeScreen() {
 \SetRow{bg=impAbg} \texttt{createContext}・\texttt{useContext} & React & 共有データの箱を作る・箱から取り出す & Flask の \texttt{g} \\
 \SetRow{bg=impBbg} \texttt{useRef} & React & 描き直しても消えない入れ物 & インスタンス変数 \\
 \SetRow{bg=impBbg} \texttt{useCallback} & React & 関数を毎回作り直さずに覚えておく & なし（速さのための工夫） \\
-\SetRow{bg=impAbg} \texttt{AsyncStorage.getItem}・\texttt{setItem} & ライブラリ（async-storage） & 端末の保存箱から読む・書く & ファイルの読み書き \\
+\SetRow{bg=impAbg} \texttt{AsyncStorage}\allowbreak\texttt{.getItem}・\texttt{setItem} & ライブラリ & 端末の保存箱から読む・書く & ファイルの読み書き \\
 \SetRow{bg=impBbg} \texttt{JSON.stringify}・\texttt{JSON.parse} & JavaScript 標準 & データと文字列を相互に変換 & \texttt{json.dumps}・\texttt{json.loads} \\
 \SetRow{bg=impBbg} \texttt{setInterval}・\texttt{clearInterval} & JavaScript 標準 & 一定時間ごとに処理を動かす・止める & \texttt{threading.Timer} \\
 \SetRow{bg=impBbg} \texttt{Math.round} & JavaScript 標準 & 四捨五入 & \texttt{round}（ただし 2.5 は Python だと 2、JS だと 3） \\
-\SetRow{bg=impBbg} \texttt{new Date().toISOString()} & JavaScript 標準 & 今の日時を世界標準時の文字列にする & \texttt{datetime.now(timezone.utc).isoformat()} \\
-\SetRow{bg=impAbg} \texttt{todayKey}・\texttt{localDateKey} & 自作（\texttt{utils/date.ts}） & 端末の時刻で \texttt{"YYYY-MM-DD"} を作る & \texttt{date.today().isoformat()} \\
-\SetRow{bg=impBbg} \texttt{genId} & 自作（\texttt{StudyLogContext.tsx}） & 時刻と乱数から記録の番号を作る & \texttt{uuid4()} の簡易版 \\
+\SetRow{bg=impBbg} \texttt{new Date()}\allowbreak\texttt{.toISOString()} & JavaScript 標準 & 今の日時を世界標準時の文字列にする & 世界標準時の \texttt{datetime} を \texttt{isoformat()} で文字列にする \\
+\SetRow{bg=impAbg} \texttt{todayKey}・\texttt{localDateKey} & 自作 & 端末の時刻で \texttt{"YYYY-MM-DD"} を作る（\texttt{utils/date.ts}） & \texttt{date.today()}\allowbreak\texttt{.isoformat()} \\
+\SetRow{bg=impBbg} \texttt{genId} & 自作 & 時刻と乱数から記録の番号を作る（\texttt{StudyLogContext.tsx}） & \texttt{uuid4()} の簡易版 \\
 \SetRow{bg=impCbg} \texttt{View}・\texttt{Text}・\texttt{TouchableOpacity} & React Native & 箱・文字・押せる部品 & tkinter の \texttt{Frame}・\texttt{Label}・\texttt{Button} \\
 \SetRow{bg=impCbg} \texttt{StyleSheet.create} & React Native & 見た目の設定をまとめる & tkinter の \texttt{configure()}（開発ログ V1） \\
-\SetRow{bg=impCbg} \texttt{SafeAreaView} & ライブラリ（safe-area-context） & 画面の切り欠きを避けて表示する & なし \\
+\SetRow{bg=impCbg} \texttt{SafeAreaView} & ライブラリ & 画面の切り欠き（カメラの部分など）を避けて表示する & なし \\
 \SetRow{bg=impCbg} \texttt{=>}（アロー関数） & JavaScript の書き方 & 短く書ける関数 & \texttt{lambda} \\
 \SetRow{bg=impCbg} \texttt{.{}.{}.}（スプレッド構文） & JavaScript の書き方 & 配列や辞書の中身を広げる & \texttt{*list}・\texttt{**dict} \\
 \SetRow{bg=impCbg} \texttt{??} & JavaScript の書き方 & 左が空（\texttt{null}／\texttt{undefined}）なら右を使う & \texttt{x if x is not None else 0} \\
