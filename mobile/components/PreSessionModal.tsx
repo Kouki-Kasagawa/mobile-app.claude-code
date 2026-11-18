@@ -19,9 +19,12 @@ export interface PreSessionInput {
 export function PreSessionModal({
   visible,
   onDone,
+  onCancel,
 }: {
   visible: boolean;
   onDone: (input: PreSessionInput) => void;
+  /** 背景や戻るボタンで閉じたとき。タイマーは開始しない */
+  onCancel: () => void;
 }) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -78,10 +81,16 @@ export function PreSessionModal({
     reset();
   };
 
+  // 背景・戻るボタンは「やめる」。以前は「スキップして開始」と同じ動きで、閉じただけでタイマーが動き出していた（#3）
+  const handleCancel = () => {
+    onCancel();
+    reset();
+  };
+
   return (
     <>
-      <Modal visible={visible} animationType="slide" transparent onRequestClose={handleSkipAll}>
-        <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleSkipAll} />
+      <Modal visible={visible} animationType="slide" transparent onRequestClose={handleCancel}>
+        <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleCancel} />
         <View style={[styles.sheet, { backgroundColor: sheetBg }]}>
           <View style={styles.handle} />
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>

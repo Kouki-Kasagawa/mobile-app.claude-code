@@ -52,10 +52,14 @@ export function PostSessionModal({
     reset();
   };
 
+  // 背景・戻るボタンでは何もしない。以前は「スキップして終了」と同じ動きで、
+  // 確認なしで学習が終了・保存されていた（#3）。終了は下のボタンからだけにする
+  const ignoreClose = () => {};
+
   return (
     <>
-      <Modal visible={visible} animationType="slide" transparent onRequestClose={handleSkipAll}>
-        <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleSkipAll} />
+      <Modal visible={visible} animationType="slide" transparent onRequestClose={ignoreClose}>
+        <View style={styles.backdrop} />
         <View style={[styles.sheet, { backgroundColor: sheetBg }]}>
           <View style={styles.handle} />
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
