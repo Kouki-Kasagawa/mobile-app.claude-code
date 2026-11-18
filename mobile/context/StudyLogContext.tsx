@@ -89,20 +89,15 @@ export function StudyLogProvider({ children }: { children: ReactNode }) {
     })();
   }, []);
 
-  const persist = useCallback(
-    (patch: Partial<PersistedData>) => {
-      if (!loaded) return;
-      AsyncStorage.getItem(STORAGE_KEY)
-        .then(raw => {
-          const current: PersistedData = raw
-            ? JSON.parse(raw)
-            : { sessions, subjectiveEntries, reactionResults };
-          return AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ ...current, ...patch }));
-        })
-        .catch(() => {});
-    },
-    [loaded, sessions, subjectiveEntries, reactionResults]
-  );
+  // 保存は「3つの記録のどれかが変わったら、全体をまとめて1回書く」だけにする。
+  // 以前は操作ごとに「読む→一部を差し替える→書く」を何度も呼んでいたため、
+  // 保存どうしがぶつかって片方の変更が古いデータで上書きされていた（#4）。
+  // 読み込みが終わる前に空のデータで上書きしないよう、loaded を待つ。
+  useEffect(() => {
+    if (!loaded) return;
+    const data: PersistedData = { sessions, subjectiveEntries, reactionResults };
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data)).catch(() => {});
+  }, [loaded, sessions, subjectiveEntries, reactionResults]);
 
   const startSession = useCallback(
     (input: { subject?: string; reward: RewardAppraisal | null; plannedFor?: string }) => {
@@ -116,29 +111,23 @@ export function StudyLogProvider({ children }: { children: ReactNode }) {
         reward: input.reward,
         plannedFor: input.plannedFor,
       };
-      setSessions(prev => {
-        const next = [...prev, session];
-        persist({ sessions: next });
-        return next;
-      });
+      setSessions(prev => [...prev, session]);
       return id;
     },
-    [persist]
+    []
   );
 
   const finishSession = useCallback(
     (id: string, durationMinutes: number) => {
-      setSessions(prev => {
-        const next = prev.map(s =>
+      setSessions(prev =>
+        prev.map(s =>
           s.id === id
             ? { ...s, endedAt: new Date().toISOString(), durationMinutes }
             : s
-        );
-        persist({ sessions: next });
-        return next;
-      });
+        )
+      );
     },
-    [persist]
+    []
   );
 
   const addSubjectiveEntry = useCallback(
@@ -153,22 +142,16 @@ export function StudyLogProvider({ children }: { children: ReactNode }) {
         note: input.note,
         timestamp: new Date().toISOString(),
       };
-      setSubjectiveEntries(prev => {
-        const next = [...prev, entry];
-        persist({ subjectiveEntries: next });
-        return next;
-      });
+      setSubjectiveEntries(prev => [...prev, entry]);
       if (input.sessionId) {
         const field = input.timing === 'pre' ? 'subjectivePreId' : 'subjectivePostId';
-        setSessions(prev => {
-          const next = prev.map(s => (s.id === input.sessionId ? { ...s, [field]: id } : s));
-          persist({ sessions: next });
-          return next;
-        });
+        setSessions(prev =>
+          prev.map(s => (s.id === input.sessionId ? { ...s, [field]: id } : s))
+        );
       }
       return id;
     },
-    [persist]
+    []
   );
 
   const addReactionResult = useCallback(
@@ -190,22 +173,16 @@ export function StudyLogProvider({ children }: { children: ReactNode }) {
         accuracy: input.accuracy,
         timestamp: new Date().toISOString(),
       };
-      setReactionResults(prev => {
-        const next = [...prev, result];
-        persist({ reactionResults: next });
-        return next;
-      });
+      setReactionResults(prev => [...prev, result]);
       if (input.sessionId) {
         const field = input.timing === 'pre' ? 'reactionPreId' : 'reactionPostId';
-        setSessions(prev => {
-          const next = prev.map(s => (s.id === input.sessionId ? { ...s, [field]: id } : s));
-          persist({ sessions: next });
-          return next;
-        });
+        setSessions(prev =>
+          prev.map(s => (s.id === input.sessionId ? { ...s, [field]: id } : s))
+        );
       }
       return id;
     },
-    [persist]
+    []
   );
 
   return (
