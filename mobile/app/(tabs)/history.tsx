@@ -223,8 +223,8 @@ export default function HistoryScreen() {
                   style={[
                     styles.dayCell,
                     {
-                      width: cellSize,
-                      height: cellSize + 8,
+                      width: cellSize - 2,
+                      height: cellSize + 6,
                       backgroundColor: bg,
                     },
                     todayBorder && { borderWidth: 2, borderColor: AppColors.accent },
