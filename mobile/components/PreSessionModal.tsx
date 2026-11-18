@@ -54,8 +54,9 @@ export function PreSessionModal({
   const buildReward = (): RewardAppraisal | null => {
     if (interest == null && importance == null && !hasDeadline) return null;
     return {
-      interest: interest ?? 3,
-      importance: importance ?? 3,
+      // 未回答を3（ふつう）で埋めると、本当に3を選んだ回答と区別できなくなるため null のまま保存する
+      interest: interest ?? null,
+      importance: importance ?? null,
       hasDeadline,
       deadlineUrgency: hasDeadline ? deadlineUrgency ?? undefined : undefined,
     };

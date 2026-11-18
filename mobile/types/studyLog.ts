@@ -1,8 +1,8 @@
 export const LOCAL_USER_ID = 'local-user-001';
 
 export interface RewardAppraisal {
-  interest: number; // 1-5 面白さ
-  importance: number; // 1-5 重要度
+  interest: number | null; // 1-5 面白さ。null は未回答
+  importance: number | null; // 1-5 重要度。null は未回答
   hasDeadline: boolean;
   deadlineUrgency?: number; // 1-5、hasDeadline=trueの時のみ
 }
