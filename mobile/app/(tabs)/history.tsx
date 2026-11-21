@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import {
-  Alert,
   Modal,
   ScrollView,
   StyleSheet,
@@ -19,6 +18,7 @@ import { useSettings } from '@/context/SettingsContext';
 import { useTime } from '@/context/TimeContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import type { FatigueLevel, ScheduleTag } from '@/types/fatigue';
+import { confirmAction } from '@/utils/dialog';
 import { calcFatigueScore, getFatigueLevel } from '@/utils/fatigueCalc';
 
 const WEEKDAYS = ['月', '火', '水', '木', '金', '土', '日'];
@@ -135,10 +135,7 @@ export default function HistoryScreen() {
   };
 
   const handleRemoveEntry = (id: string) => {
-    Alert.alert('削除しますか？', undefined, [
-      { text: 'キャンセル', style: 'cancel' },
-      { text: '削除', style: 'destructive', onPress: () => removeEntry(id) },
-    ]);
+    confirmAction({ title: '削除しますか？', confirmText: '削除', onConfirm: () => removeEntry(id) });
   };
 
   const today = now;

@@ -2,7 +2,6 @@ import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { useMemo, useRef, useState } from 'react';
 import {
-  Alert,
   Keyboard,
   Linking,
   ScrollView,
@@ -27,6 +26,7 @@ import { useTime } from '@/context/TimeContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { buildActivityCsv, buildExportJson, buildSessionsCsv, ExportBundle } from '@/utils/exportLog';
 import { todayKey } from '@/utils/date';
+import { confirmAction, showMessage } from '@/utils/dialog';
 import { saveAndShare } from '@/utils/fileExport';
 import { buildQuadrantPoints } from '@/utils/quadrant';
 
@@ -90,7 +90,7 @@ export default function SettingsScreen() {
       const combined = `# sessions\n${sessionsCsv}\n\n# activities\n${activityCsv}\n`;
       await saveAndShare(`study_log_${todayKey()}.csv`, combined, 'text/csv');
     } catch {
-      Alert.alert('エクスポートに失敗しました');
+      showMessage('エクスポートに失敗しました');
     } finally {
       setExporting(false);
     }
@@ -103,17 +103,14 @@ export default function SettingsScreen() {
       const json = buildExportJson(bundle);
       await saveAndShare(`study_log_${todayKey()}.json`, json, 'application/json');
     } catch {
-      Alert.alert('エクスポートに失敗しました');
+      showMessage('エクスポートに失敗しました');
     } finally {
       setExporting(false);
     }
   };
 
   const handleSignOut = () => {
-    Alert.alert('ログアウトしますか？', undefined, [
-      { text: 'キャンセル', style: 'cancel' },
-      { text: 'ログアウト', style: 'destructive', onPress: signOut },
-    ]);
+    confirmAction({ title: 'ログアウトしますか？', confirmText: 'ログアウト', onConfirm: signOut });
   };
 
   const handleGoToLogin = async () => {
@@ -122,14 +119,12 @@ export default function SettingsScreen() {
   };
 
   const handleDeleteData = () => {
-    Alert.alert(
-      'データを削除しますか？',
-      '学習記録がすべて消えます。この操作は取り消せません。',
-      [
-        { text: 'キャンセル', style: 'cancel' },
-        { text: '削除する', style: 'destructive', onPress: resetAll },
-      ]
-    );
+    confirmAction({
+      title: 'データを削除しますか？',
+      message: '学習記録がすべて消えます。この操作は取り消せません。',
+      confirmText: '削除する',
+      onConfirm: resetAll,
+    });
   };
 
   const cardStyle = [styles.card, { backgroundColor: isDark ? '#1A251C' : '#FFFFFF' }];

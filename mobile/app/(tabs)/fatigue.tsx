@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  Alert,
   Modal,
   ScrollView,
   StyleSheet,
@@ -20,6 +19,7 @@ import { useFatigue } from '@/hooks/use-fatigue';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import type { ScheduleTag } from '@/types/fatigue';
 import { todayKey } from '@/utils/date';
+import { confirmAction } from '@/utils/dialog';
 
 const DURATION_OPTIONS = [30, 60, 90, 120, 180];
 
@@ -79,10 +79,7 @@ export default function FatigueScreen() {
   };
 
   const handleRemoveEntry = (id: string) => {
-    Alert.alert('削除しますか？', undefined, [
-      { text: 'キャンセル', style: 'cancel' },
-      { text: '削除', style: 'destructive', onPress: () => removeEntry(id) },
-    ]);
+    confirmAction({ title: '削除しますか？', confirmText: '削除', onConfirm: () => removeEntry(id) });
   };
 
   return (
